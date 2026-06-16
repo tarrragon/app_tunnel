@@ -34,7 +34,7 @@ supersedes: null
 
 # PROP-001: MVP：手機遠端操作本機真實終端機
 
-> **本提案定位（範圍綁定提案）**：本專案的「為什麼做 / 做什麼不做」已由 CLAUDE.md 的 D1–D9 + State-Storage 決策完整論證（經 saas-tech-selection 訪談協議產出）。本提案**不重複**那些論證，只負責三件事：(1) 綁定 v0.1.0 MVP 的明確功能範圍（In/Out Scope）；(2) 提供 spec/usecase/ticket 的上游導航錨點；(3) 列出與 In Scope 一一對應的驗收條件。決策理由一律以 `CLAUDE.md Dx` 形式引用。
+> **本提案定位（範圍綁定提案）**：本提案源自 `docs/tech-decisions.md`（saas-tech-selection 訪談完整決策記錄），經 saas↔doc 銜接映射生成——§0 定錨 + §3 技術維度 + §4/§5 底線/tripwire 映射為本提案的範圍界定、替代方案、失敗防護與驗收條件。本提案不重複決策論證，只負責三件事：(1) 綁定 v0.1.0 MVP 的明確功能範圍（In/Out Scope）；(2) 提供 spec/usecase/ticket 的上游導航錨點；(3) 列出與 In Scope 一一對應的驗收條件。決策理由一律以 `docs/tech-decisions.md Dx` 形式引用。
 >
 > **狀態說明**：分級為 heavy（影響面廣）但目前置於 `draft`——範圍已界定，但尚未開立實作 ticket、尚未執行 heavy 級多視角審查。promote 至 `confirmed` 前須補「多視角審查記錄」並綁定 `ticket_refs`（見規則 4）。
 
@@ -59,7 +59,7 @@ supersedes: null
 
 ### 本提案要做的（In Scope，v0.1.0 MVP）
 
-- **IS-1 三層認證鏈路**：CF Access Service Token（邊緣）+ Go proxy `X-App-Tunnel-Token`（主機）+ ttyd basic auth（最後防線）；proxy 驗錯／缺密鑰一律回 404、constant-time 比較。對應 CLAUDE.md D4、`docs/contract.md` 三層認證表。
+- **IS-1 三層認證鏈路**：CF Access Service Token（邊緣）+ Go proxy `X-App-Tunnel-Token`（主機）+ ttyd basic auth（最後防線）；proxy 驗錯／缺密鑰一律回 404、constant-time 比較。對應 docs/tech-decisions.md D4、`docs/contract.md` 三層認證表。
 - **IS-2 Go proxy 透明轉發**：`httputil.ReverseProxy` 透明 WS upgrade，驗密鑰後刪除 `X-App-Tunnel-Token` 不上傳、原樣轉發 ttyd `Authorization`；proxy→ttyd timeout、graceful shutdown、結構化稽核 log（記放行與拒絕，真實 client_ip 取自 CF-Connecting-Ip，絕不 log PTY 內容）。對應 D1、D8、D9。
 - **IS-3 QR enrollment 一次性配對**：主機 `enroll` 子命令產 proxy 密鑰（`crypto/rand`）、存可插拔後端（keychain/file 0600/env）、組憑證包 JSON、`qrencode -t ANSIUTF8` 印 ASCII QR；手機掃一次存 secure storage。對應 D6、D7。
 - **IS-4 Flutter 終端機 UI**：Face ID/BiometricPrompt 解鎖 → 讀 secure storage 憑證 → 自接 ttyd `tty` 子協議的 WSS；WS 協議包成一層薄抽象（協議版本切換只改一處）。對應 D3、`docs/contract.md` WebSocket 子協議。
@@ -79,7 +79,7 @@ supersedes: null
 
 ## 替代方案
 
-> heavy 級要求至少 3 候選 + 逐一評估。本提案的方案即 CLAUDE.md D1–D9 已決策內容，下表標示「採用 vs 次選」，理由不重述（指回 Dx）。
+> heavy 級要求至少 3 候選 + 逐一評估。本提案的方案即 docs/tech-decisions.md D1–D9 已決策內容，下表標示「採用 vs 次選」，理由不重述（指回 Dx）。
 
 | 決策維度 | 採用方案 | 次選方案 A | 次選方案 B | 依據 |
 |---------|---------|-----------|-----------|------|
