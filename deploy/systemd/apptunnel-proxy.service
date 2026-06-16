@@ -1,0 +1,21 @@
+# Linux systemd user unit 範本:app-tunnel-proxy
+# 安裝:複製到 ~/.config/systemd/user/app-tunnel-proxy.service
+# 起:systemctl --user start app-tunnel-proxy
+# 停:systemctl --user stop app-tunnel-proxy
+# 注意:不 enable(不開機自啟),符合「手動起停、不常駐」姿態。
+# 密鑰用 file 後端(Linux 無 macOS keychain),路徑需 chmod 600。
+
+[Unit]
+Description=app_tunnel 本機認證 proxy
+After=network.target
+
+[Service]
+ExecStart=%h/project/app_tunnel/server/app-tunnel-proxy \
+  -listen 127.0.0.1:8080 \
+  -ttyd http://127.0.0.1:7681 \
+  -secret-backend file \
+  -secret-file %h/.config/app_tunnel/token
+Restart=no
+
+[Install]
+WantedBy=default.target

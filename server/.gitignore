@@ -1,0 +1,8 @@
+# 編譯產物
+/app-tunnel-proxy
+*.exe
+
+# 密鑰檔(file 後端)— 絕不進 repo
+*.secret
+secret.txt
+token.txt

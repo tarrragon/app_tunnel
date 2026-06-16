@@ -27,3 +27,14 @@ bin/
 # 暫存
 tmp/
 .cache/
+
+# 密鑰與憑證(絕不進 repo)
+*.secret
+secret.txt
+token.txt
+*.pem
+.cloudflared/
+
+# Go 編譯產物
+/server/app-tunnel-proxy
+/server/app-tunnel-proxy-*

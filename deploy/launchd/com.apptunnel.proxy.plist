@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS launchd 範本:app-tunnel-proxy。手動起停,不放 LaunchAgents 自啟。
+     起:launchctl bootstrap gui/$(id -u) com.apptunnel.proxy.plist
+     停:launchctl bootout gui/$(id -u)/com.apptunnel.proxy
+     替換 <YOU> 與 binary 路徑。密鑰用 keychain 後端,不落明文。 -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.apptunnel.proxy</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/<YOU>/project/app_tunnel/server/app-tunnel-proxy</string>
+    <string>-listen</string><string>127.0.0.1:8080</string>
+    <string>-ttyd</string><string>http://127.0.0.1:7681</string>
+    <string>-secret-backend</string><string>keychain</string>
+    <string>-keychain-service</string><string>app-tunnel</string>
+    <string>-keychain-account</string><string>proxy-token</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/tmp/app-tunnel-proxy.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/app-tunnel-proxy.log</string>
+</dict>
+</plist>
