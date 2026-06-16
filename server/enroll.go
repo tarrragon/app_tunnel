@@ -69,21 +69,26 @@ func runEnroll(args []string) {
 		log.Printf("[enroll] 已產生新 proxy 密鑰並存入 %s 後端", *backend)
 	}
 
-	payload, err := json.Marshal(bundle{
-		V:              1,
-		Protocol:       "ttyd-tty/v1",
-		Endpoint:       *endpoint,
-		CFAccessID:     *cfID,
-		CFAccessSecret: *cfSecret,
-		ProxyToken:     token,
-		TtydUser:       *ttydUser,
-		TtydPass:       *ttydPass,
-	})
+	payload, err := json.Marshal(buildBundle(*endpoint, *cfID, *cfSecret, token, *ttydUser, *ttydPass))
 	if err != nil {
 		log.Fatalf("[enroll] 組憑證包失敗: %v", err)
 	}
 
 	renderQR(payload)
+}
+
+// buildBundle 組裝 QR 憑證包(抽成函式以便測試)。
+func buildBundle(endpoint, cfID, cfSecret, token, ttydUser, ttydPass string) bundle {
+	return bundle{
+		V:              1,
+		Protocol:       "ttyd-tty/v1",
+		Endpoint:       endpoint,
+		CFAccessID:     cfID,
+		CFAccessSecret: cfSecret,
+		ProxyToken:     token,
+		TtydUser:       ttydUser,
+		TtydPass:       ttydPass,
+	}
 }
 
 // newToken 用 crypto/rand 產生 32 bytes(64 hex)密鑰。

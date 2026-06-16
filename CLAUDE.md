@@ -89,6 +89,21 @@
 - **防護**:QR 含全部憑證明文、僅顯示一次,勿截圖;密鑰用 `crypto/rand` 產生;掃描後主機端密鑰已落後端、QR 即關。
 - **tripwire → 設計 B(非對稱)**:要「主機端零可重用密鑰 + 私鑰硬體保護」時升級——手機金鑰對、QR 回送公鑰、runtime 改挑戰-回應(nonce 簽 + replay 防護),`protocol` 升版、proxy 改驗簽握手。詳見 `docs/contract.md`。
 
+**D8 — Observability:結構化稽核 log,不建 pager**
+- **理由**:單人、無 SLA,「掛了」你連線即知,不需 uptime 監控/pager。但 shell 閘道的關鍵訊號是**誰連上了**——proxy 記錄**放行**與拒絕連線(結構化 JSON、真實 client_ip 取自 CF-Connecting-Ip)、依賴(ttyd)失敗分類為 ERROR。
+- **防護**:**絕不 log PTY 內容**(你打的指令含密碼)——透明 proxy 天然滿足,Phase 2 自開 PTY 做錄影時必須遵守。
+- **tripwire**:想「有人連上即時知道」→ 加連線推播(ntfy.sh 類)到手機(本次選不做)。
+
+**D9 — Reliability:CI gate + 測試 + timeout**
+- **理由**:proxy 是安全敏感程式,可靠性最低標 = `go test` gate + 認證閘道測試。已建單元測試(認證閘道 / secret 後端 / 權限 / enroll)、CI(vet+test+跨平台 build)、graceful shutdown、proxy→ttyd 明確 timeout。
+- **防護**:外部呼叫(連 ttyd)有 timeout;go.mod/go.sum 鎖依賴(目前零外部依賴,Phase 2 加 WS/pty lib 時 go.sum 生效)。
+- **N/A**:重試/idempotency(無編排操作)、webhook 驗簽(無 webhook)。
+
+**State-Storage — 無 application datastore**
+- 本工具無 source-of-truth 資料庫:proxy 密鑰(`enroll` 可重產)、cloudflared 憑證(`tunnel create` 可重建)、CF Access 設定(在後台)皆可重建,不需備份;migration/多租戶隔離 N/A。
+- **觸發型維度**:cache / async-queue / capacity-performance 皆**未觸發**(無高頻讀、無不可丟 event、單人無高峰)。
+- **tripwire**:若加 session 紀錄/指令解釋歷史(embedded SQLite),state-storage 才變真,屆時啟用備份/migration 底線。
+
 ### 目錄結構
 
 ```

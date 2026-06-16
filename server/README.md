@@ -75,9 +75,22 @@ QR 含全部憑證明文、僅顯示一次,**勿截圖外流**。格式見 `../d
 
 常駐部署見 `../deploy/`(launchd / systemd)。
 
-## 待辦(TDD Phase 2/3)
+## 測試與 CI
 
-- [ ] 單元測試:認證閘道(無/錯/對 token)、各密鑰後端、權限檢查、`Store` 寫入、enroll 憑證包組裝
-- [ ] graceful shutdown(SIGTERM 先停收新連線)
-- [ ] 連線數限制與結構化日誌
-- [ ] (Phase 2 選項)自行用 `creack/pty` 開 PTY、拿掉 ttyd 依賴
+```bash
+go vet ./... && go test ./... -count=1
+```
+
+CI gate 見 `../.github/workflows/ci.yml`(vet + test + darwin/linux build)。
+
+## 已硬化
+
+- [x] 單元測試:認證閘道(無/錯/對 token + 不上傳 token)、`secret` Store/Load roundtrip、權限拒絕、env、未知後端、enroll 憑證包/密鑰長度
+- [x] 結構化稽核 log(JSON):記錄**放行**與拒絕連線、真實 client_ip(CF-Connecting-Ip)、依賴失敗分類
+- [x] graceful shutdown(SIGTERM 先停收新連線)
+- [x] proxy→ttyd 明確 dial timeout
+
+## 待辦
+
+- [ ] 連線數限制(rate limit)
+- [ ] (Phase 2 選項)自行用 `creack/pty` 開 PTY、拿掉 ttyd 依賴(`apptunnel/v1` 協議)

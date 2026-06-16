@@ -29,8 +29,8 @@ Flutter app(Face ID)→ CF Tunnel → CF Access(邊緣)→ Go proxy(本機密鑰
 ## 開發狀態
 
 - [x] 技術選型(Go proxy / monorepo / 原生 Flutter 終端機)
-- [x] server 認證閘道(scaffold,認證行為已驗證)
-- [ ] server TDD 硬化(測試 / graceful shutdown)
+- [x] server 認證閘道 + QR enrollment
+- [x] server 硬化(單元測試 / CI gate / 稽核 log / graceful shutdown / timeout)
 - [ ] app Flutter 實作
 - [ ] 部署實機驗證
 
