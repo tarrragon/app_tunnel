@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# 環境變數與機密
+.env
+.env.*
+*.local
+
+# 日誌
+*.log
+logs/
+
+# 相依套件 / 建置產物(依實際技術棧再調整)
+node_modules/
+dist/
+build/
+out/
+target/
+bin/
+*.exe
+
+# 編輯器 / IDE
+.vscode/
+.idea/
+*.swp
+
+# 暫存
+tmp/
+.cache/
