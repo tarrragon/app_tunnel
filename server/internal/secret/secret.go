@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -42,6 +43,38 @@ func Load(c Config) (string, error) {
 		return v, nil
 	default:
 		return "", fmt.Errorf("secret: 未知後端 %q(支援 file|keychain|env)", c.Backend)
+	}
+}
+
+// Store 把密鑰寫入指定後端(enroll 用)。file 寫 0600、keychain 用 security -U 覆寫。env 唯讀。
+func Store(c Config, value string) error {
+	switch c.Backend {
+	case "file":
+		if c.FilePath == "" {
+			return fmt.Errorf("secret: file 後端需要 -secret-file 路徑")
+		}
+		if err := os.MkdirAll(filepath.Dir(c.FilePath), 0o700); err != nil {
+			return fmt.Errorf("secret: 建立目錄失敗: %w", err)
+		}
+		if err := os.WriteFile(c.FilePath, []byte(value+"\n"), 0o600); err != nil {
+			return fmt.Errorf("secret: 寫入 %s 失敗: %w", c.FilePath, err)
+		}
+		// 既有檔權限可能不是 0600,強制收斂。
+		return os.Chmod(c.FilePath, 0o600)
+	case "keychain":
+		if runtime.GOOS != "darwin" {
+			return fmt.Errorf("secret: keychain 後端僅支援 macOS(目前 %s),請改用 file", runtime.GOOS)
+		}
+		if c.KeychainService == "" || c.KeychainAccount == "" {
+			return fmt.Errorf("secret: keychain 後端需要 service 與 account")
+		}
+		// -U:已存在則更新。注意密鑰會短暫出現在 process args(自用本機可接受)。
+		return exec.Command("security", "add-generic-password", "-U",
+			"-s", c.KeychainService, "-a", c.KeychainAccount, "-w", value).Run()
+	case "env":
+		return fmt.Errorf("secret: env 後端唯讀,不支援寫入")
+	default:
+		return fmt.Errorf("secret: 未知後端 %q(支援 file|keychain)", c.Backend)
 	}
 }
 

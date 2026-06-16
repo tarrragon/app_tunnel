@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 
 	"github.com/tarrragon/app_tunnel/server/internal/secret"
 )
@@ -22,16 +23,30 @@ import (
 const tokenHeader = "X-App-Tunnel-Token"
 
 func main() {
+	// 子指令:enroll(QR 配對)。預設 serve(認證 proxy)。
+	if len(os.Args) > 1 && os.Args[1] == "enroll" {
+		runEnroll(os.Args[2:])
+		return
+	}
+	args := os.Args[1:]
+	if len(args) > 0 && args[0] == "serve" {
+		args = args[1:]
+	}
+	runServe(args)
+}
+
+func runServe(args []string) {
+	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	var (
-		listen    = flag.String("listen", "127.0.0.1:8080", "proxy 監聽位址(只綁本機,對外由 cloudflared 接)")
-		ttydURL   = flag.String("ttyd", "http://127.0.0.1:7681", "本機 ttyd 位址")
-		backend   = flag.String("secret-backend", "file", "密鑰後端:file|keychain|env")
-		secFile   = flag.String("secret-file", "", "file 後端:密鑰檔路徑(需 0600)")
-		kcService = flag.String("keychain-service", "app-tunnel", "keychain 後端:service 名")
-		kcAccount = flag.String("keychain-account", "proxy-token", "keychain 後端:account 名")
-		envVar    = flag.String("secret-env", "APP_TUNNEL_TOKEN", "env 後端:環境變數名")
+		listen    = fs.String("listen", "127.0.0.1:8080", "proxy 監聽位址(只綁本機,對外由 cloudflared 接)")
+		ttydURL   = fs.String("ttyd", "http://127.0.0.1:7681", "本機 ttyd 位址")
+		backend   = fs.String("secret-backend", "file", "密鑰後端:file|keychain|env")
+		secFile   = fs.String("secret-file", "", "file 後端:密鑰檔路徑(需 0600)")
+		kcService = fs.String("keychain-service", "app-tunnel", "keychain 後端:service 名")
+		kcAccount = fs.String("keychain-account", "proxy-token", "keychain 後端:account 名")
+		envVar    = fs.String("secret-env", "APP_TUNNEL_TOKEN", "env 後端:環境變數名")
 	)
-	flag.Parse()
+	fs.Parse(args)
 
 	token, err := secret.Load(secret.Config{
 		Backend:         *backend,

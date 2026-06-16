@@ -42,23 +42,42 @@ umask 077 && openssl rand -hex 32 > ~/.config/app_tunnel/token
 chmod 600 ~/.config/app_tunnel/token   # proxy 啟動會檢查權限,過寬即拒絕
 ```
 
-## 執行
+## 配對手機(QR enrollment,設計 A)
+
+`enroll` 子指令產生 proxy 密鑰、存後端、組憑證包,並在終端機印 ASCII QR(需 `qrencode`,
+無頭 Linux 亦可)。**一次性配對**——人在主機旁掃一次,之後遠端用手機儲存的憑證連。
+
+```bash
+# 需先安裝 qrencode:brew install qrencode / apt install qrencode
+./app-tunnel-proxy enroll \
+  -endpoint wss://term.<你的網域>/ws \
+  -cf-access-id <CF Access client id> -cf-access-secret <CF Access client secret> \
+  -ttyd-user <user> -ttyd-pass <pass> \
+  -secret-backend keychain -keychain-service app-tunnel -keychain-account proxy-token
+# 預設每次 enroll 產生「新」密鑰(=輪替);要重用既有密鑰加 -reuse
+```
+
+QR 含全部憑證明文、僅顯示一次,**勿截圖外流**。格式見 `../docs/contract.md`。
+
+## 執行(serve)
 
 ```bash
 # macOS
-./app-tunnel-proxy -listen 127.0.0.1:8080 -ttyd http://127.0.0.1:7681 \
+./app-tunnel-proxy serve -listen 127.0.0.1:8080 -ttyd http://127.0.0.1:7681 \
   -secret-backend keychain -keychain-service app-tunnel -keychain-account proxy-token
 
 # Linux
-./app-tunnel-proxy -listen 127.0.0.1:8080 -ttyd http://127.0.0.1:7681 \
+./app-tunnel-proxy serve -listen 127.0.0.1:8080 -ttyd http://127.0.0.1:7681 \
   -secret-backend file -secret-file ~/.config/app_tunnel/token
 ```
+
+(`serve` 為預設子指令,可省略。)
 
 常駐部署見 `../deploy/`(launchd / systemd)。
 
 ## 待辦(TDD Phase 2/3)
 
-- [ ] 單元測試:認證閘道(無/錯/對 token)、各密鑰後端、權限檢查
+- [ ] 單元測試:認證閘道(無/錯/對 token)、各密鑰後端、權限檢查、`Store` 寫入、enroll 憑證包組裝
 - [ ] graceful shutdown(SIGTERM 先停收新連線)
 - [ ] 連線數限制與結構化日誌
 - [ ] (Phase 2 選項)自行用 `creack/pty` 開 PTY、拿掉 ttyd 依賴

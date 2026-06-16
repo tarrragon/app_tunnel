@@ -84,6 +84,11 @@
 - **防護**:`file` 後端啟動時檢查權限,過寬(group/other 可讀)即拒絕;密鑰檔與憑證一律 `.gitignore`。
 - **tripwire**:secret 數量 > 10 或存取主體變多 → 引入 secret manager。
 
+**D7 — 憑證配對:QR enrollment(設計 A 對稱,MVP)**
+- **理由**:把「手動複製 64 字元密鑰」這個最易錯/易外洩環節,換成**視覺 air-gap 掃描**(不經剪貼簿/雲)。主機 `enroll` 子指令產密鑰、組憑證包、`qrencode -t ANSIUTF8` 印 ASCII QR(無頭 Linux 亦可),手機掃一次存 Keychain。定位為**一次性配對**(遠端情境無法每次掃),runtime 認證不變(仍靜態 header),proxy 主路徑不改。
+- **防護**:QR 含全部憑證明文、僅顯示一次,勿截圖;密鑰用 `crypto/rand` 產生;掃描後主機端密鑰已落後端、QR 即關。
+- **tripwire → 設計 B(非對稱)**:要「主機端零可重用密鑰 + 私鑰硬體保護」時升級——手機金鑰對、QR 回送公鑰、runtime 改挑戰-回應(nonce 簽 + replay 防護),`protocol` 升版、proxy 改驗簽握手。詳見 `docs/contract.md`。
+
 ### 目錄結構
 
 ```
