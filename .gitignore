@@ -38,3 +38,8 @@ token.txt
 # Go 編譯產物
 /server/app-tunnel-proxy
 /server/app-tunnel-proxy-*
+
+# Python 編譯產物(框架 skill 執行時生成)
+__pycache__/
+*.pyc
+.venv/
