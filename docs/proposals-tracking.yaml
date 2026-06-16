@@ -1,0 +1,45 @@
+# 提案追蹤索引（需求生命週期，與 ticket 任務生命週期分離）
+# 維護規則見 .claude/skills/doc/references/tracking.md
+
+proposals:
+  PROP-001:
+    title: "MVP：手機遠端操作本機真實終端機"
+    status: draft                # draft / discussing / confirmed / implemented / withdrawn
+    evaluation_level: heavy
+    proposed: "2026-06-16"
+    confirmed: null
+    target_version: "v0.1.0"
+    source: development
+    spec_refs:
+      - spec/auth/three-layer-auth.md
+      - spec/proxy/go-reverse-proxy.md
+      - spec/enrollment/qr-enrollment.md
+      - spec/client/flutter-terminal-client.md
+      - spec/connectivity/cloudflare-tunnel.md
+    usecase_refs:
+      - UC-01
+      - UC-02
+      - UC-03
+      - UC-04
+    ticket_refs: []              # promote 至 confirmed 前須綁定實作 ticket（規則 4）
+    checklist:
+      - item: "IS-1 三層認證鏈路（CF Access + proxy token + ttyd basic auth，驗錯回 404、constant-time）"
+        status: pending
+        verified_by: null
+      - item: "IS-2 Go proxy 透明 WS 轉發 + timeout + graceful shutdown + 稽核 log（不含 PTY 內容）"
+        status: pending
+        verified_by: null
+      - item: "IS-3 QR enrollment 一次性配對（enroll 產密鑰 + 可插拔後端 + ASCII QR）"
+        status: pending
+        verified_by: null
+      - item: "IS-4 Flutter 終端機 UI（Face ID + secure storage + 協議抽象層 + 自接 tty 子協議）"
+        status: pending
+        verified_by: null
+      - item: "IS-5 運作姿態與部署（named tunnel + 手動起停 + deploy 配置）"
+        status: pending
+        verified_by: null
+    notes: >
+      範圍已由 CLAUDE.md D1–D9 訪談決策確認，本提案僅做版本範圍綁定與導航錨點。
+      promote 路徑：補多視角審查記錄（至少 linux + 安全視角）→ 開實作 ticket → status 改 confirmed。
+      框架特例：doc skill 的 domain/platform/extension_status 欄位為 Chrome Extension 遺留，
+      已於 spec/usecase 以本專案語意重新詮釋，缺口待回饋 docs/upstream-feedback/。
