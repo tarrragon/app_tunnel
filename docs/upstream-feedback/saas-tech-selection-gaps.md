@@ -4,6 +4,7 @@
 > **回饋對象**:`/Users/mac-eric/project/blog`(skill authoring upstream,remote `tarrragon/blog.git`)。
 > **原則**(見 CLAUDE.md 6.5):本檔僅作缺口記錄與驗證,**正式修改一律在 blog 進行**,改完同步散佈回 app_tunnel。
 > **發現版本**:skill v0.6.0
+> **狀態(2026-06-16)**:三缺口**已全數回饋 blog**,commit `7c27eb0`(skill 3 處:interview-core / security / deployment-platform;backend 章節:0.21 delivery-mode 新段、7.2 identity 新問題節點+段、5.10 outbound-tunnel-entry 新章)。app_tunnel 本地 `.claude/skills/` 副本待下次 sync-pull 同步,勿手改。
 
 ---
 
@@ -41,6 +42,10 @@
 **建議修正**:deployment-platform 維度增列「**outbound tunnel(cloudflared / Tailscale Funnel 類)**」候選,適用於「自架但不想暴露公網入口」;附防護底線(tunnel 網址不是密碼、不可當安全機制;前面必須再疊一層認證閘道)與 tripwire(流量/多入口成長時改評估正式反向代理)。
 
 ---
+
+## 處理紀錄
+
+- 2026-06-16 — GAP-01 / 02 / 03 全數回饋 blog(commit `7c27eb0`)。skill 與 backend 教學章節同步更新。
 
 ## 待補充
 
