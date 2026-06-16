@@ -8,7 +8,7 @@
 
 **專案名稱**: app_tunnel
 
-**專案目標**: 手機透過 Cloudflare Tunnel 遠端操作本機真實終端機的**單人自用工具**。鏈路:`Flutter app（Face ID）→ 帶密鑰連線 → CF Tunnel → 本機 Go proxy（驗密鑰）→ ttyd → zsh`。
+**專案目標**: 手機透過 Tailscale mesh VPN 遠端操作本機真實終端機的**單人自用工具**。鏈路:`Flutter app（Face ID）→ Tailscale VPN → 本機 Go proxy（稽核 log）→ ttyd（basic auth）→ zsh`。
 
 **專案類型**: 單人自用自架基礎設施工具(非 SaaS、非多租戶、非對外服務)。**Monorepo** 管理:Flutter 手機端 + Go 本機 proxy。
 
@@ -61,8 +61,8 @@
 | D1 | server 語言 | Go | `docs/tech-decisions.md` §3 |
 | D2 | repo 管理 | Monorepo | `docs/tech-decisions.md` §3 |
 | D3 | 手機端 | 原生 Flutter 終端機 UI | `docs/tech-decisions.md` §3 |
-| D4 | 認證 | 三層縱深防護 | `docs/tech-decisions.md` §3 |
-| D5 | 運作姿態 | Named tunnel + 手動起停 | `docs/tech-decisions.md` §3 |
+| D4 | 認證 | 兩層（Tailscale 裝置認證 + ttyd basic auth） | `docs/tech-decisions.md` §3 |
+| D5 | 運作姿態 | Tailscale + 手動起停 ttyd/proxy | `docs/tech-decisions.md` §3 |
 | D6 | 密鑰保管 | 可插拔後端 | `docs/tech-decisions.md` §3 |
 | D7 | 憑證配對 | QR enrollment 設計 A | `docs/tech-decisions.md` §3 |
 | D8 | Observability | 結構化稽核 log | `docs/tech-decisions.md` §3 |
@@ -83,15 +83,15 @@
 ```
 app_tunnel/
 ├── app/          # Flutter 手機端(原生終端機 UI)
-├── server/       # Go 本機 proxy(驗密鑰 + WS 轉發)
-├── deploy/       # ttyd / cloudflared config、launchd plist、setup 腳本
+├── server/       # Go 本機 proxy(稽核 log + WS 透明轉發)
+├── deploy/       # ttyd config、Tailscale 設定指引、launchd plist、起停腳本
 ├── docs/         # 決策記錄、契約規格、需求文件、upstream-feedback
 └── CLAUDE.md
 ```
 
 ### 框架缺口待回饋
 
-套用 saas-tech-selection 時發現的缺口已記於 `docs/upstream-feedback/saas-tech-selection-gaps.md`（交付形態 gate 缺自用工具形態、認證維度缺裝置綁定+共享密鑰、部署維度缺 outbound tunnel + 介面契約段缺口），待回 blog 修正。
+套用 saas-tech-selection 時發現的缺口已記於 `docs/upstream-feedback/saas-tech-selection-gaps.md`（交付形態 gate 缺自用工具形態、認證維度缺裝置綁定+共享密鑰、部署維度缺 mesh VPN 形態 + 介面契約段缺口），待回 blog 修正。
 
 ---
 
