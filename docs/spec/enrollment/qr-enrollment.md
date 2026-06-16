@@ -1,11 +1,11 @@
 ---
 id: SPEC-003
-title: "QR enrollment 一次性配對（設計 A 對稱）"
+title: "QR enrollment 一次性配對（精簡版）"
 status: draft
 source_proposal: PROP-001
 created: "2026-06-16"
-updated: "2026-06-16"
-version: "1.0"
+updated: "2026-06-17"
+version: "2.0"
 owner: fennel-go-developer
 
 # Domain 歸屬
@@ -20,73 +20,49 @@ related_specs:
 depends_on_domains: [auth, client]
 ---
 
-# QR enrollment 一次性配對（設計 A 對稱）
+# QR enrollment 一次性配對（精簡版）
 
 ## 概述
 
-把「手動複製 64 字元密鑰」這個最易錯/易外洩環節，換成視覺 air-gap 掃描（不經剪貼簿/雲）。定位為**一次性配對**（遠端情境無法每次掃），runtime 認證不變（仍靜態 header），proxy 主路徑不改（CLAUDE.md D7）。
+把「手動輸入 ttyd 帳密 + Tailscale endpoint」這個易錯環節，換成視覺 air-gap 掃描（不經剪貼簿/雲）。定位為**一次性配對**（遠端情境無法每次掃），runtime 認證由 Tailscale + ttyd basic auth 處理（docs/tech-decisions.md D7）。
 
-> **骨架階段標記**：enroll 子命令依 git log（29ac897「QR 配對 enrollment（設計 A）」）已有實作；下列 FR 完整驗收（尤其 ASCII QR 手機實機掃描）待對照 `server/` 核實。
+> **變更記錄（2026-06-17）**：原為產 proxy 密鑰 + 組 8 欄憑證包，改用 Tailscale 後 proxy token 移除、CF Access 移除，憑證包縮為 ~4 欄（endpoint + ttyd 帳密 + protocol version）。FR-01（密鑰產生）和 FR-02（可插拔後端）隨 proxy token 移除而簡化/移除。
 
 ## 功能需求
 
-### FR-01: enroll 子命令產生密鑰
+### FR-01: enroll 子命令組憑證包
 
 | 項目 | 值 |
 |------|-----|
 | 優先級 | P0 |
 | 來源 | PROP-001 IS-3 |
 | 對應用例 | UC-01, UC-03 |
-| 狀態 | 部分實作（待核實） |
+| 狀態 | 需修改（現有實作含 proxy token 產生，需移除） |
 
-**描述**：主機 `enroll` 子命令以 `crypto/rand` 產生 proxy 密鑰（32 bytes / 64 hex），存可插拔後端。
-
-**驗收標準**：
-
-- [ ] 密鑰由 `crypto/rand` 產生，64 hex
-- [ ] 重跑 enroll 預設產生新密鑰（支援輪替，UC-03）
-
----
-
-### FR-02: 可插拔密鑰後端
-
-| 項目 | 值 |
-|------|-----|
-| 優先級 | P0 |
-| 來源 | PROP-001 IS-3 / CLAUDE.md D6 |
-| 對應用例 | UC-01 |
-| 狀態 | 部分實作（待核實） |
-
-**描述**：密鑰載入抽象成多後端，跨平台零改碼。
-
-**約束條件**：
-
-- `keychain`（macOS 預設，不落明文）
-- `file`（0600，Linux / 通用 fallback）— 啟動時檢查權限，過寬即拒絕
-- `env`（CI / 容器）
+**描述**：主機 `enroll` 子命令收集 Tailscale endpoint 與 ttyd 帳密，組成憑證包 JSON。不再需要產生 proxy token。
 
 **驗收標準**：
 
-- [ ] 三後端可切換，binary 跨編譯 darwin/linux 不改碼
-- [ ] file 後端權限過寬（group/other 可讀）時啟動拒絕
+- [ ] 產出符合資料模型的憑證包 JSON（v2 格式）
+- [ ] 重跑 enroll 可更新憑證包（支援帳密輪替，UC-03）
 
 ---
 
-### FR-03: 憑證包與 ASCII QR
+### FR-02: ASCII QR 顯示
 
 | 項目 | 值 |
 |------|-----|
 | 優先級 | P0 |
 | 來源 | PROP-001 IS-3 |
 | 對應用例 | UC-01 |
-| 狀態 | 部分實作（待核實） |
+| 狀態 | 部分實作（現有 QR 產生邏輯可沿用，payload 需更新） |
 
-**描述**：組憑證包 JSON（見資料模型），`qrencode -t ANSIUTF8` 在終端機印 ASCII QR（無頭 Linux 亦可），手機掃一次。
+**描述**：`qrencode -t ANSIUTF8` 在終端機印 ASCII QR（無頭 Linux 亦可），手機掃一次。
 
 **驗收標準**：
 
-- [ ] 產出符合資料模型的憑證包 JSON
 - [ ] 印出可被手機掃描的 ASCII QR
+- [ ] QR payload 為 v2 格式憑證包
 
 ---
 
@@ -96,12 +72,9 @@ depends_on_domains: [auth, client]
 
 | 欄位 | 型別 | 必填 | 說明 |
 |------|------|------|------|
-| v | int | 是 | payload 版本（目前 1） |
+| v | int | 是 | payload 版本（2） |
 | protocol | string | 是 | `ttyd-tty/v1` |
-| endpoint | string | 是 | `wss://term.<網域>/ws` |
-| cf_access_id | string | 是 | CF Access service token client id |
-| cf_access_secret | string | 是 | CF Access service token client secret |
-| proxy_token | string | 是 | `X-App-Tunnel-Token` 密鑰 |
+| endpoint | string | 是 | `http://<tailscale-ip-or-magicDNS>:<port>/ws` |
 | ttyd_user | string | 是 | ttyd basic auth 帳號 |
 | ttyd_pass | string | 是 | ttyd basic auth 密碼 |
 
@@ -109,11 +82,12 @@ depends_on_domains: [auth, client]
 
 | 約束 | 說明 | 影響 |
 |------|------|------|
-| QR 含全部憑證明文 | 僅顯示一次，勿截圖 | 配對只在人在主機旁做，掃後即關 QR |
-| 一次性配對 | 非每次連線 | runtime 認證仍走靜態 header，proxy 主路徑不改 |
+| QR 含 ttyd 帳密明文 | 僅顯示一次，勿截圖 | 配對只在人在主機旁做，掃後即關 QR |
+| 一次性配對 | 非每次連線 | runtime 認證由 Tailscale + ttyd 處理 |
 
 ## 變更歷史
 
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
-| 1.0 | 2026-06-16 | 初始骨架（PROP-001 轉化） |
+| 1.0 | 2026-06-16 | 初始骨架（8 欄憑證包，含 CF Access + proxy token） |
+| 2.0 | 2026-06-17 | 改用 Tailscale：移除密鑰產生 + 可插拔後端、憑證包縮為 5 欄 |

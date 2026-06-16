@@ -4,8 +4,8 @@ title: "Flutter 原生終端機客戶端"
 status: draft
 source_proposal: PROP-001
 created: "2026-06-16"
-updated: "2026-06-16"
-version: "1.0"
+updated: "2026-06-17"
+version: "1.1"
 owner: parsley-flutter-developer
 
 # Domain 歸屬
@@ -24,7 +24,7 @@ depends_on_domains: [auth, enrollment]
 
 ## 概述
 
-手機端原生 Flutter 終端機 UI（自渲染 xterm 類 + 自接 ttyd WS 子協議），改善手機操 CLI 的打字體驗（Esc/Ctrl/方向鍵）。憑證存 secure storage、不硬寫進 app；每次連線前過 Face ID/BiometricPrompt（CLAUDE.md D3）。
+手機端原生 Flutter 終端機 UI（自渲染 xterm 類 + 自接 ttyd WS 子協議），改善手機操 CLI 的打字體驗（Esc/Ctrl/方向鍵）。憑證存 secure storage、不硬寫進 app；每次連線前過 Face ID/BiometricPrompt（docs/tech-decisions.md D3）。手機需安裝 Tailscale 加入 tailnet，透過 Tailscale 私有網路連線至主機。
 
 > **骨架階段標記**：app 端尚未開工，下列 FR 全部標未實作。
 
@@ -84,7 +84,7 @@ depends_on_domains: [auth, enrollment]
 **驗收標準**：
 
 - [ ] 協議版本切換只需改抽象層一處
-- [ ] WSS 連線帶齊三層憑證 header
+- [ ] WS 連線帶 ttyd basic auth header（Tailscale 網路層已處理裝置認證）
 
 ---
 
@@ -134,3 +134,4 @@ depends_on_domains: [auth, enrollment]
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（PROP-001 轉化） |
+| 1.1 | 2026-06-17 | 改用 Tailscale：三層 header→ttyd basic auth only、加 Tailscale 依賴 |

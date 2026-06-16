@@ -40,15 +40,15 @@ supersedes: null
 
 ## 動機（需求來源與為何做）
 
-單人自用自架基礎設施工具的原始規劃功能項：人在外時，手機透過 Cloudflare Tunnel 遠端操作家中／辦公室本機的真實 zsh 終端機。鏈路為 `Flutter app（Face ID）→ 帶憑證 WSS → CF Tunnel → 本機 Go proxy（驗密鑰）→ ttyd → zsh`，契約細節見 `docs/contract.md`。
+單人自用自架基礎設施工具的原始規劃功能項：人在外時，手機透過 Tailscale mesh VPN 遠端操作家中／辦公室本機的真實 zsh 終端機。鏈路為 `Flutter app（Face ID）→ Tailscale VPN → Go proxy（稽核 log）→ ttyd（basic auth）→ zsh`，契約細節見 `docs/contract.md`。
 
-**為何做**：手機原生 SSH/終端機 app 在「打字體驗（Esc/Ctrl/方向鍵）」與「安全暴露面」兩端難以兼顧；直接對外開 SSH 暴露窗大、手動複製長密鑰進手機易錯易外洩。本工具用「Cloudflare Tunnel 出站連線（不開入站埠）+ 三層縱深認證 + QR 視覺配對 + 自渲染終端機 UI」解這組問題。失敗代價是「整台機器的 shell 外洩」，故安全底線不可協商。
+**為何做**：手機原生 SSH/終端機 app 在「打字體驗（Esc/Ctrl/方向鍵）」與「安全暴露面」兩端難以兼顧；直接對外開 SSH 暴露窗大、手動複製長密鑰進手機易錯易外洩。本工具用「Tailscale 私有網路（端點不存在於公開網路）+ ttyd basic auth + QR 視覺配對 + 自渲染終端機 UI」解這組問題。失敗代價是「整台機器的 shell 外洩」，故安全底線不可協商。
 
 ## 影響範圍
 
 | 影響項目 | 說明 |
 |---------|------|
-| 模組 | `server/`（Go proxy）、`app/`（Flutter）、`deploy/`（ttyd / cloudflared / launchd） |
+| 模組 | `server/`（Go proxy）、`app/`（Flutter）、`deploy/`（ttyd / launchd / Tailscale 設定指引） |
 | 檔案 | `server/` proxy + enroll 子命令；`app/` 終端機 UI + secure storage；`deploy/` 配置與起停腳本 |
 | 契約 | `docs/contract.md`（app⇄server 共用 SOT，本提案不改其內容，只引用） |
 | 用例 | UC-01 首次配對、UC-02 遠端連線操作、UC-03 密鑰輪替、UC-04 啟停服務 |
@@ -59,18 +59,18 @@ supersedes: null
 
 ### 本提案要做的（In Scope，v0.1.0 MVP）
 
-- **IS-1 三層認證鏈路**：CF Access Service Token（邊緣）+ Go proxy `X-App-Tunnel-Token`（主機）+ ttyd basic auth（最後防線）；proxy 驗錯／缺密鑰一律回 404、constant-time 比較。對應 docs/tech-decisions.md D4、`docs/contract.md` 三層認證表。
-- **IS-2 Go proxy 透明轉發**：`httputil.ReverseProxy` 透明 WS upgrade，驗密鑰後刪除 `X-App-Tunnel-Token` 不上傳、原樣轉發 ttyd `Authorization`；proxy→ttyd timeout、graceful shutdown、結構化稽核 log（記放行與拒絕，真實 client_ip 取自 CF-Connecting-Ip，絕不 log PTY 內容）。對應 D1、D8、D9。
-- **IS-3 QR enrollment 一次性配對**：主機 `enroll` 子命令產 proxy 密鑰（`crypto/rand`）、存可插拔後端（keychain/file 0600/env）、組憑證包 JSON、`qrencode -t ANSIUTF8` 印 ASCII QR；手機掃一次存 secure storage。對應 D6、D7。
-- **IS-4 Flutter 終端機 UI**：Face ID/BiometricPrompt 解鎖 → 讀 secure storage 憑證 → 自接 ttyd `tty` 子協議的 WSS；WS 協議包成一層薄抽象（協議版本切換只改一處）。對應 D3、`docs/contract.md` WebSocket 子協議。
-- **IS-5 運作姿態與部署**：Cloudflare named tunnel + 自有固定網域；手動起停（不開機自啟、不 24/7 常駐）；`deploy/` 提供 ttyd/cloudflared 配置、launchd plist（不放 `~/Library/LaunchAgents`）、setup 腳本。對應 D5。
+- **IS-1 兩層認證**：Tailscale 裝置認證（網路層，未加入 tailnet 的裝置連 IP 都到不了）+ ttyd basic auth（應用層最後防線）。Go proxy 不做認證，只做稽核 log + 透明轉發。對應 D4、`docs/contract.md` 兩層認證表。
+- **IS-2 Go proxy 稽核 log + 透明轉發**：`httputil.ReverseProxy` 透明 WS upgrade，原樣轉發 ttyd `Authorization`；proxy→ttyd timeout、graceful shutdown、結構化稽核 log（記每次連線，client_ip 取自 Tailscale 對端 IP，絕不 log PTY 內容）。對應 D1、D8、D9。
+- **IS-3 QR enrollment 一次性配對**：主機 `enroll` 子命令收集 Tailscale endpoint + ttyd 帳密、組 v2 憑證包 JSON、`qrencode -t ANSIUTF8` 印 ASCII QR；手機掃一次存 secure storage。對應 D6、D7。
+- **IS-4 Flutter 終端機 UI**：Face ID/BiometricPrompt 解鎖 → 讀 secure storage 憑證 → 透過 Tailscale VPN 自接 ttyd `tty` 子協議；WS 協議包成一層薄抽象（協議版本切換只改一處）。對應 D3、`docs/contract.md` WebSocket 子協議。
+- **IS-5 運作姿態與部署**：Tailscale daemon 常駐（維持 VPN 隧道）；ttyd + proxy 手動起停（不開機自啟、不 24/7 常駐）；`deploy/` 提供 ttyd 配置、Tailscale ACL 建議、起停腳本。對應 D5。
 
 ### 本提案不做的（Out of Scope）
 
 - **設計 B 非對稱認證（挑戰-回應、手機金鑰對、nonce 簽章 + replay 防護）** → D7 tripwire 觸發才做（要「主機端零可重用密鑰 + 私鑰硬體保護」時），屆時 `protocol` 升版、獨立提案。
 - **proxy 自開 PTY、拿掉 ttyd（`apptunnel/v1`）** → D1 tripwire，Phase 2 重評協議層，獨立提案。
-- **多人／多租戶帳號系統 + 動態密鑰下發** → 從單人變多人才重設計三層認證，獨立提案。
-- **always-on 常駐 + WAF／入口限流／告警** → D5 tripwire（暴露窗放大才補）。
+- **多人／多租戶帳號系統** → 從單人變多人才重設計 Tailscale ACL + ttyd 認證，獨立提案。
+- **ttyd always-on 常駐** → D5 tripwire（雖在私有網路內攻擊面有限，仍建議補 Tailscale ACL tag）。
 - **連線推播到手機（ntfy.sh 類）** → D8 明示本次選不做。
 - **PTY 錄影／指令解釋歷史 + embedded SQLite** → State-Storage tripwire（加 session 紀錄才啟用備份/migration）。
 - **uptime 監控／pager** → D8，單人無 SLA。
@@ -86,8 +86,9 @@ supersedes: null
 | server 語言 | Go（stdlib 透明 WS 轉發、單一靜態 binary） | PHP（請求-回應模型，逆語言慣性） | Python（拖 venv、async WS 囉嗦） | D1 |
 | repo 管理 | Monorepo（契約共用、atomic commit） | Polyrepo（無獨立發布節奏，四條件皆不符） | — | D2 |
 | 手機端 | 原生 Flutter 自渲染終端機 | WebView 內嵌 ttyd（打字體驗差） | — | D3（WebView 列為 tripwire 退路） |
-| 認證模型 | 三層縱深（CF Access + proxy 密鑰 + ttyd） | 單層 proxy 密鑰（失敗即整機 shell 外洩，不可接受） | 僅靠 tunnel 網址保密（網址不是密碼） | D4 |
-| 配對方式 | QR enrollment 對稱設計 A | 手動複製 64-hex 密鑰（最易錯/易外洩） | 非對稱設計 B（過度，列為 tripwire 升級） | D7 |
+| 網路層 | Tailscale mesh VPN（私有網路，端點不存在） | Cloudflare Tunnel（公開 URL + 多層防護） | 直接對外開 SSH（暴露面大） | D4/D5 |
+| 認證模型 | 兩層（Tailscale 裝置認證 + ttyd basic auth） | 三層（CF Access + proxy token + ttyd） | 單層（不可接受） | D4 |
+| 配對方式 | QR enrollment 精簡版 | 手動輸入帳密（易錯） | 非對稱設計 B（過度，列為 tripwire 升級） | D7 |
 
 ### 建議方案
 
@@ -99,25 +100,25 @@ supersedes: null
 
 | 失敗情境 | 後果 | 防護 |
 |---------|------|------|
-| proxy 密鑰驗證出現 fallback 放行 | 拿到 tunnel 網址的外人直通 shell | 驗錯/缺密鑰一律回 404、不 fallback、constant-time 比較；ttyd basic auth 為最後防線（D4） |
+| Tailscale 帳號被入侵 | 攻擊者加入 tailnet 可達服務 | ttyd basic auth 為第二層防線；Tailscale ACL 限制存取裝置（D4） |
 | 稽核 log 誤記 PTY 內容 | 你打的密碼進 log 外洩 | 透明 proxy 天然不接觸 PTY；Phase 2 自開 PTY 時硬性禁止 log PTY 內容（D8） |
-| QR 截圖外流 | 全套憑證明文外洩 | QR 僅顯示一次、掃後即關、勿截圖；輪替走重 enroll（D7） |
-| 忘記關閉服務 | always-on 暴露窗放大 | 手動起停 + 一鍵關三行程；不開機自啟、launchd 不放 LaunchAgents（D5） |
-| 跨平台密鑰後端權限過寬 | file 後端被 group/other 讀取 | file 後端啟動檢查 0600 權限，過寬即拒絕（D6） |
+| QR 截圖外流 | ttyd 帳密明文外洩 | QR 僅顯示一次、掃後即關、勿截圖；輪替走重 enroll（D7） |
+| 忘記關閉 ttyd/proxy | 服務持續暴露（但在 Tailscale 私有網路內） | 手動起停 + 一鍵關兩行程；不開機自啟（D5） |
+| ttyd 帳密弱密碼 | 暴力破解風險（雖在私有網路內） | enroll 提示帳密強度建議 |
 
 ## 機會成本
 
-不做本提案的替代是「沿用對外 SSH 或商用遠端 app」——前者暴露面大且需自管入站防火牆，後者打字體驗與信任邊界不可控。投入本提案的主要機會成本是 Flutter 自渲染終端機的工程量（D3 已標 tripwire 退路：投報率不如預期退回 WebView）。server 端 proxy 職責極小（約 50 行 + 認證閘道），邊際成本低。
+不做本提案的替代是「沿用對外 SSH 或商用遠端 app」——前者暴露面大且需自管入站防火牆，後者打字體驗與信任邊界不可控。投入本提案的主要機會成本是 Flutter 自渲染終端機的工程量（D3 已標 tripwire 退路：投報率不如預期退回 WebView）。server 端 proxy 職責極小（稽核 log + 透明轉發），邊際成本低。
 
 ## 驗收條件
 
 > 與「要做的」清單一一對應。
 
-- [ ] **AC-1（對應 IS-1）**：proxy 在密鑰正確時放行、錯誤或缺失時回 404（不 upgrade、不轉發），且比較為 constant-time；三層憑證可串接通過完整鏈路。
-- [ ] **AC-2（對應 IS-2）**：proxy 透明轉發 WS 訊框不改動、驗密鑰後刪除 `X-App-Tunnel-Token`；具 proxy→ttyd timeout、graceful shutdown、結構化稽核 log（含 client_ip，不含 PTY 內容）。
-- [ ] **AC-3（對應 IS-3）**：`enroll` 子命令產生 64-hex 密鑰、存指定後端、印出可掃描的 ASCII QR；手機掃描後憑證落 secure storage。
-- [ ] **AC-4（對應 IS-4）**：app 過 Face ID/BiometricPrompt 後，以儲存憑證連線並正常操作 zsh；WS 協議抽象層使協議版本切換只需改一處。
-- [ ] **AC-5（對應 IS-5）**：named tunnel 固定網域可達；提供手動起停機制（起 / 用完關三個行程），不開機自啟。
+- [ ] **AC-1（對應 IS-1）**：未加入 tailnet 的裝置無法連線；ttyd basic auth 失敗時回 401；兩層認證可串接通過完整鏈路。
+- [ ] **AC-2（對應 IS-2）**：proxy 透明轉發 WS 訊框不改動；具 proxy→ttyd timeout、graceful shutdown、結構化稽核 log（含 client_ip，不含 PTY 內容）。
+- [ ] **AC-3（對應 IS-3）**：`enroll` 子命令收集 endpoint + ttyd 帳密、印出可掃描的 ASCII QR（v2 憑證包）；手機掃描後憑證落 secure storage。
+- [ ] **AC-4（對應 IS-4）**：app 過 Face ID/BiometricPrompt 後，透過 Tailscale VPN 以儲存憑證連線並正常操作 zsh；WS 協議抽象層使協議版本切換只需改一處。
+- [ ] **AC-5（對應 IS-5）**：Tailscale 網路內 endpoint 可達；提供手動起停機制（起 / 用完關兩行程），ttyd/proxy 不開機自啟。
 
 ## Reality Test / 觸發案例實證
 
@@ -127,7 +128,7 @@ supersedes: null
 
 ### 假設列舉
 
-- 假設 1：Cloudflare named tunnel 出站連線可在不開放入站埠的前提下提供固定可達網址。
+- 假設 1：Tailscale mesh VPN 可讓手機透過私有網路連線至主機服務，無需開放入站埠。
 - 假設 2：Go stdlib `httputil.ReverseProxy` 自 1.12 起可透明轉發 WebSocket upgrade，無需額外 WS 函式庫。
 - 假設 3：`qrencode -t ANSIUTF8` 可在無頭 Linux 終端機印出可被手機掃描的 ASCII QR。
 
@@ -135,16 +136,16 @@ supersedes: null
 
 | 假設 | 驗證方式 | 執行的實驗/觀察 | 結果 |
 |------|---------|----------------|------|
-| 假設 2 | 既有 server 實作 | git log 顯示 proxy + 認證閘道 + 測試已 commit（3f85498、29ac897） | 已驗證可行（透明轉發 + 測試綠燈） |
-| 假設 1 | 待 deploy 階段實機 | 尚未實機建立 named tunnel | 未驗證（列為部署階段風險） |
+| 假設 2 | 既有 server 實作 | git log 顯示 proxy + 測試已 commit（3f85498） | 已驗證可行（透明轉發 + 測試綠燈） |
+| 假設 1 | 待 deploy 階段實機 | 尚未在手機安裝 Tailscale 實測連線 | 未驗證（列為部署階段風險） |
 | 假設 3 | 待 enroll 實機 | enroll 子命令已實作，ASCII QR 實機掃描待測 | 部分驗證（程式已寫，掃描端到端待測） |
 
 ### 已驗證 vs 未驗證
 
 | 類別 | 內容 |
 |------|------|
-| 已驗證 | Go proxy 透明 WS 轉發 + 三層認證閘道邏輯 + enroll 子命令（已有實作與單元測試） |
-| 未驗證 | named tunnel 端到端可達性、ASCII QR 手機實機掃描、Flutter 終端機打字體驗（app 端尚未開工） |
+| 已驗證 | Go proxy 透明 WS 轉發 + enroll 子命令（已有實作與單元測試） |
+| 未驗證 | Tailscale 手機→主機端到端連線、ASCII QR 手機實機掃描、Flutter 終端機打字體驗（app 端尚未開工） |
 
 ## 多視角審查記錄
 
@@ -161,8 +162,8 @@ supersedes: null
 | 風險 | 影響 | 緩解措施 |
 |------|------|---------|
 | Flutter 自渲染終端機工程量大於 WebView | app 開發拖長 | D3 tripwire：投報率不如預期則退回 WebView 內嵌 ttyd |
-| named tunnel/CF Access 設定錯誤 | 鏈路不通或邊緣未擋 | 部署階段以 AC-1 三層串接測試驗證 |
-| 手動起停依賴人為紀律 | 忘記關閉放大暴露窗 | 起停腳本一鍵關三行程；D5 不做 always-on |
+| Tailscale 設定錯誤 / ACL 未配 | tailnet 內其他裝置可能連線 | 部署階段配 ACL + AC-1 驗證 |
+| 手動起停依賴人為紀律 | 忘記關閉 ttyd/proxy | 起停腳本一鍵關兩行程；Tailscale 私有網路內攻擊面有限（D5） |
 
 ## 討論記錄
 

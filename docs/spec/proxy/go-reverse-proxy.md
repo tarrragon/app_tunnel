@@ -4,8 +4,8 @@ title: "Go 透明反向代理"
 status: draft
 source_proposal: PROP-001
 created: "2026-06-16"
-updated: "2026-06-16"
-version: "1.0"
+updated: "2026-06-17"
+version: "1.1"
 owner: fennel-go-developer
 
 # Domain 歸屬
@@ -16,7 +16,7 @@ subdomain: null
 related_usecases: [UC-02, UC-04]
 related_specs:
   - spec/auth/three-layer-auth.md
-  - spec/connectivity/cloudflare-tunnel.md
+  - spec/connectivity/tailscale.md
 depends_on_domains: [auth, connectivity]
 ---
 
@@ -24,9 +24,10 @@ depends_on_domains: [auth, connectivity]
 
 ## 概述
 
-本機 Go proxy 是 shell 的唯一對外閘道：接 WSS、驗密鑰（見 SPEC-001）、透明轉發 WS 到 `localhost:7681`（ttyd）。職責極小（CLAUDE.md D1），用 stdlib `httputil.ReverseProxy`，編譯為單一靜態 binary。
+本機 Go proxy 負責稽核 log + 透明轉發 WS 到 `localhost:7681`（ttyd）。不做認證——認證由 Tailscale（網路層）+ ttyd basic auth（應用層）處理（見 SPEC-001）。職責極小（docs/tech-decisions.md D1），用 stdlib `httputil.ReverseProxy`，編譯為單一靜態 binary。
 
-> **核實標記（2026-06-16，對照 `server/main.go`）**：proxy 主體（透明代理、timeout、graceful shutdown、稽核 log）程式碼皆已實作。測試覆蓋目前集中在認證閘道與 `clientIP`；timeout / shutdown / WS upgrade 端到端尚無專門測試（見各 FR 狀態）。
+> **核實標記（2026-06-16，對照 `server/main.go`）**：proxy 主體（透明代理、timeout、graceful shutdown、稽核 log）程式碼皆已實作。改用 Tailscale 後認證閘道程式碼將移除，測試對應調整。
+> **變更記錄（2026-06-17）**：proxy 不再做認證（原 X-App-Tunnel-Token 驗證移除），只保留稽核 log + 透明轉發 + timeout + shutdown。
 
 ## 功能需求
 
@@ -101,7 +102,7 @@ depends_on_domains: [auth, connectivity]
 
 **約束條件**：
 
-- 真實 client_ip 取自 `CF-Connecting-Ip`
+- client_ip 取自 `req.RemoteAddr`（Tailscale 內為真實對端 IP）
 - **絕不 log PTY 內容**（含密碼）——透明 proxy 天然滿足；Phase 2 自開 PTY 時必須遵守
 
 **驗收標準**：
@@ -133,3 +134,4 @@ depends_on_domains: [auth, connectivity]
 | 版本 | 日期 | 變更內容 |
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（PROP-001 轉化） |
+| 1.1 | 2026-06-17 | 改用 Tailscale：移除認證職責、client_ip 改取 RemoteAddr |
