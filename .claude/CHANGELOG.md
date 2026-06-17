@@ -1,3 +1,75 @@
+## [1.52.3] - 2026-06-17
+
+### Summary
+chore: pull .claude 更新（上游 d2424984）
+
+Changes: 1 chore
+
+- chore: pull .claude 更新（上游 d2424984）
+
+---
+
+## [1.52.2] - 2026-06-17
+
+### Summary
+fix: 允許 PM 編輯任意層級 README.md
+
+Changes: 1 fix
+
+- fix: 允許 PM 編輯任意層級 README.md
+
+---
+
+## [1.52.1] - 2026-06-17
+
+### Summary
+sync .claude configuration
+
+---
+
+## [1.52.0] - 2026-06-17
+
+### Summary
+feat: saas↔doc 雙向銜接 + CLAUDE.md 瘦身（決策記錄移交為代謝機制）
+
+Changes: 1 feat
+
+- feat: saas↔doc 雙向銜接 + CLAUDE.md 瘦身（決策記錄移交為代謝機制）
+
+---
+
+## [1.51.3] - 2026-06-16
+
+### Summary
+sync .claude configuration
+
+---
+
+## [1.51.2] - 2026-06-16
+
+### Summary
+fix: _is_placeholder 補行尾空殼偵測修 行首語意回歸; chore: pull .claude 更新（上游 2c3d77f7）; chore: .claude 框架同步 + 還原至 docs/analyses
+
+Changes: 1 fix, 2 chore
+
+- fix: _is_placeholder 補行尾空殼偵測修 行首語意回歸
+- chore: pull .claude 更新（上游 2c3d77f7）
+- chore: .claude 框架同步 + 還原至 docs/analyses
+
+---
+
+## [1.51.1] - 2026-06-16
+
+### Summary
+chore: 整理 settings.json 共用層權限; chore: 移除原作者專案產物殘留並補齊 sync/gitignore 排除
+
+Changes: 2 chore
+
+- chore: 整理 settings.json 共用層權限
+- chore: 移除原作者專案產物殘留並補齊 sync/gitignore 排除
+
+---
+
 ## [1.51.0] - 2026-06-16
 
 ### Summary
