@@ -1,0 +1,38 @@
+# ttyd configuration example for app_tunnel
+#
+# ttyd is the PTY backend that exposes a shell over WebSocket.
+# Go proxy forwards WS traffic to ttyd on localhost:7681.
+#
+# Usage:
+#   cp ttyd.conf.example ttyd.conf
+#   # Edit ttyd.conf with your credentials
+#   ttyd --config ttyd.conf /bin/zsh
+#
+# Or pass flags directly:
+#   ttyd -p 7681 -c user:password -i 127.0.0.1 /bin/zsh
+
+# --- Authentication (required) ---
+# basic auth credentials: "user:password"
+# This is the application-layer last line of defense (Layer 2 in contract.md).
+# Generate a strong password; do NOT use defaults.
+credential = CHANGE_ME_USER:CHANGE_ME_PASSWORD
+
+# --- Network binding ---
+# Bind to localhost only. Go proxy on the same machine forwards traffic.
+# Never bind to 0.0.0.0 — ttyd must not be reachable from the network directly.
+interface = 127.0.0.1
+
+# Listen port (default: 7681)
+port = 7681
+
+# --- Terminal settings ---
+# Max concurrent clients (single-user tool; 1 is sufficient)
+max-clients = 2
+
+# Allow only one instance of the shell per browser tab
+once = false
+
+# --- Security hardening ---
+# Disable built-in HTTP basic auth prompt caching
+# (proxy handles credential forwarding from app)
+check-origin = true

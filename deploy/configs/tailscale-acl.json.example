@@ -1,0 +1,42 @@
+{
+  "// ABOUT": [
+    "Tailscale ACL policy for app_tunnel (single-user self-hosted tool).",
+    "Apply this in Tailscale Admin Console -> Access Controls.",
+    "Restricts proxy port access to owner devices only.",
+    "",
+    "Replace placeholders:",
+    "  YOUR_EMAIL  - your Tailscale login email",
+    "  PROXY_HOST  - hostname of the machine running app-tunnel-proxy",
+    "  PROXY_PORT  - proxy listen port (default 8765)"
+  ],
+
+  "// LAYER 1": [
+    "Network-layer access control (see docs/contract.md Layer 1).",
+    "Devices not in your tailnet cannot reach the proxy at all."
+  ],
+
+  "tagOwners": {
+    "tag:app-tunnel": ["YOUR_EMAIL"]
+  },
+
+  "acls": [
+    {
+      "// NOTE": "Allow only your own devices to reach the proxy port",
+      "action": "accept",
+      "src": ["YOUR_EMAIL"],
+      "dst": ["PROXY_HOST:PROXY_PORT"]
+    },
+    {
+      "// NOTE": "Deny everything else by default (Tailscale implicit deny)",
+      "action": "accept",
+      "src": ["YOUR_EMAIL"],
+      "dst": ["PROXY_HOST:443"]
+    }
+  ],
+
+  "// MINIMAL POLICY": [
+    "For maximum restriction, remove the :443 rule above",
+    "and keep only the PROXY_PORT rule.",
+    "Tailscale denies all traffic not explicitly allowed."
+  ]
+}
