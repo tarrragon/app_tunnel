@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
-import 'package:app_tunnel/features/enrollment/credential_payload.dart';
+import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
 
 /// Full-screen QR scanner for one-time credential enrollment.
 ///
-/// Requirement: [UC-01] Scan QR once to capture credential payload.
-/// On successful scan, pops with [CredentialPayload] as result.
+/// Requirement: [UC-01] Scan QR once to capture credential.
+/// On successful scan, pops with [Credential] as result.
 /// On parse error, shows inline error message and continues scanning.
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -35,9 +35,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     if (barcode?.rawValue == null) return;
 
     try {
-      final payload = _parser.parse(barcode!.rawValue!);
+      final credential = _parser.parse(barcode!.rawValue!);
       _processed = true;
-      Navigator.of(context).pop(payload);
+      Navigator.of(context).pop(credential);
     } on EnrollmentError catch (e) {
       setState(() => _errorMessage = e.message);
     }

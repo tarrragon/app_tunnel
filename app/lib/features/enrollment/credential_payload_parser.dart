@@ -1,32 +1,32 @@
 import 'dart:convert';
 
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
-import 'package:app_tunnel/features/enrollment/credential_payload.dart';
+import 'package:app_tunnel/features/credential/credential.dart';
 
-/// Parses raw QR string into a [CredentialPayload].
+/// Parses raw QR string into a [Credential].
 ///
 /// Requirement: [UC-01 EX-01-02] Validates format before returning;
 /// throws [EnrollmentError] on any validation failure so callers
-/// never receive a partially-valid payload.
+/// never receive a partially-valid credential.
 class CredentialPayloadParser {
   const CredentialPayloadParser();
 
   static const _requiredVersion = 2;
 
-  /// Parses [raw] JSON string from QR code into [CredentialPayload].
+  /// Parses [raw] JSON string from QR code into [Credential].
   ///
   /// Throws [InvalidJsonError] if [raw] is not valid JSON.
   /// Throws [MissingFieldError] if any required field is absent.
   /// Throws [UnsupportedVersionError] if `v` is not 2.
   /// Throws [InvalidEndpointError] if endpoint URL is malformed.
-  CredentialPayload parse(String raw) {
+  Credential parse(String raw) {
     final json = _decodeJson(raw);
     _validateRequiredFields(json);
     _validateVersion(json);
     final endpoint = json['endpoint'] as String;
     _validateEndpoint(endpoint);
 
-    return CredentialPayload(
+    return Credential(
       version: json['v'] as int,
       protocol: json['protocol'] as String,
       endpoint: endpoint,

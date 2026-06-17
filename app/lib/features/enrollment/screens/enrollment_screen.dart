@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
-import 'package:app_tunnel/features/enrollment/credential_payload.dart';
 import 'package:app_tunnel/features/enrollment/qr_scanner_screen.dart';
 
 /// Requirement: [UC-01] Full enrollment flow — scan QR, parse, save credential.
-/// Flow: tap scan → QrScannerScreen → parse payload → check existing → save → done.
+/// Flow: tap scan → QrScannerScreen → parse credential → check existing → save → done.
 /// Constraint: if credential already exists, show overwrite confirmation (UC-03).
 class EnrollmentScreen extends StatefulWidget {
   const EnrollmentScreen({
@@ -26,23 +25,22 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
 
   /// Requirement: [UC-01] Launch QR scanner and handle result.
   Future<void> _startEnrollment() async {
-    final payload = await Navigator.of(context).push<CredentialPayload>(
+    final credential = await Navigator.of(context).push<Credential>(
       MaterialPageRoute(builder: (_) => const QrScannerScreen()),
     );
-    if (payload == null || !mounted) return;
+    if (credential == null || !mounted) return;
 
-    await _processPayload(payload);
+    await _processCredential(credential);
   }
 
-  /// Requirement: [UC-01] Convert payload to credential, check existing, save.
-  Future<void> _processPayload(CredentialPayload payload) async {
+  /// Requirement: [UC-01] Check existing credential, save scanned credential.
+  Future<void> _processCredential(Credential credential) async {
     setState(() {
       _isProcessing = true;
       _statusMessage = null;
     });
 
     try {
-      final credential = _toCredential(payload);
       final hasExisting = await widget.credentialRepository.exists();
 
       if (hasExisting && mounted) {
@@ -96,17 +94,6 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
   void _showSuccessSnackBar() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Credential saved successfully')),
-    );
-  }
-
-  /// Convert parsed QR payload to storable credential.
-  Credential _toCredential(CredentialPayload payload) {
-    return Credential(
-      version: payload.version,
-      protocol: payload.protocol,
-      endpoint: payload.endpoint,
-      ttydUser: payload.ttydUser,
-      ttydPass: payload.ttydPass,
     );
   }
 

@@ -1,12 +1,11 @@
 /// 需求：[UC-01] 配對流程端對端整合測試
-/// 驗證：QR payload 解析 -> 轉換為 Credential -> 儲存至 repository
+/// 驗證：QR payload 解析為 Credential -> 儲存至 repository
 /// 約束：使用 mock server（InMemoryCredentialRepository），無需真實後端。
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
-import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
 
 import 'test_helpers.dart';
@@ -26,15 +25,8 @@ void main() {
       // Given: valid QR payload JSON string
       const raw = testQrPayloadJson;
 
-      // When: parse and convert to Credential, then save
-      final payload = parser.parse(raw);
-      final credential = Credential(
-        version: payload.version,
-        protocol: payload.protocol,
-        endpoint: payload.endpoint,
-        ttydUser: payload.ttydUser,
-        ttydPass: payload.ttydPass,
-      );
+      // When: parse directly to Credential, then save
+      final credential = parser.parse(raw);
       await repository.save(credential);
 
       // Then: credential is retrievable and matches original payload

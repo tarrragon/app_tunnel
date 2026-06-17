@@ -7,7 +7,6 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_manager.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_state.dart'
@@ -53,14 +52,7 @@ void main() {
 
       // When: new QR payload parsed and saved (overwrites)
       const parser = CredentialPayloadParser();
-      final payload = parser.parse(rotatedQrPayloadJson());
-      final newCredential = Credential(
-        version: payload.version,
-        protocol: payload.protocol,
-        endpoint: payload.endpoint,
-        ttydUser: payload.ttydUser,
-        ttydPass: payload.ttydPass,
-      );
+      final newCredential = parser.parse(rotatedQrPayloadJson());
       await repository.save(newCredential);
 
       // Then: loaded credential reflects the new password
@@ -130,14 +122,8 @@ void main() {
         'enroll -> connect -> rotate -> reconnect with new cred', () async {
       // Step 1: Initial enrollment
       const parser = CredentialPayloadParser();
-      final initialPayload = parser.parse(testQrPayloadJson);
-      await repository.save(Credential(
-        version: initialPayload.version,
-        protocol: initialPayload.protocol,
-        endpoint: initialPayload.endpoint,
-        ttydUser: initialPayload.ttydUser,
-        ttydPass: initialPayload.ttydPass,
-      ));
+      final initialCredential = parser.parse(testQrPayloadJson);
+      await repository.save(initialCredential);
 
       // Step 2: Connect with initial credential
       var manager = createManager();
@@ -147,14 +133,8 @@ void main() {
       await manager.dispose();
 
       // Step 3: Rotate credential (new QR scan)
-      final rotatedPayload = parser.parse(rotatedQrPayloadJson());
-      await repository.save(Credential(
-        version: rotatedPayload.version,
-        protocol: rotatedPayload.protocol,
-        endpoint: rotatedPayload.endpoint,
-        ttydUser: rotatedPayload.ttydUser,
-        ttydPass: rotatedPayload.ttydPass,
-      ));
+      final rotatedCredential = parser.parse(rotatedQrPayloadJson());
+      await repository.save(rotatedCredential);
 
       // Step 4: Reconnect with rotated credential
       manager = createManager();

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:app_tunnel/features/auth/biometric_service.dart';
@@ -218,7 +219,7 @@ class ConnectionManager {
     Uri uri,
     Map<String, String> headers,
   ) {
-    return WebSocketChannel.connect(
+    return IOWebSocketChannel.connect(
       uri,
       protocols: ['tty'],
       headers: headers,

@@ -16,9 +16,18 @@ void main() {
       ));
 
       controller.add('hello world');
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
-      expect(find.text('hello world'), findsOneWidget);
+      // TerminalRenderer 使用 RichText + TextSpan 渲染
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is RichText &&
+              widget.text.toPlainText().contains('hello world'),
+        ),
+        findsOneWidget,
+      );
 
       await controller.close();
     });
@@ -33,11 +42,19 @@ void main() {
       ));
 
       controller.add('line1\nline2\nline3');
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
-      expect(find.text('line1'), findsOneWidget);
-      expect(find.text('line2'), findsOneWidget);
-      expect(find.text('line3'), findsOneWidget);
+      for (final line in ['line1', 'line2', 'line3']) {
+        expect(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is RichText &&
+                widget.text.toPlainText().contains(line),
+          ),
+          findsOneWidget,
+        );
+      }
 
       await controller.close();
     });
@@ -52,9 +69,17 @@ void main() {
       ));
 
       controller.add('\x1B[31mred text\x1B[0m');
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
-      expect(find.text('red text'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is RichText &&
+              widget.text.toPlainText().contains('red text'),
+        ),
+        findsOneWidget,
+      );
 
       await controller.close();
     });
@@ -84,12 +109,13 @@ void main() {
         ),
       ));
 
+      // 先關閉 stream 避免 dispose 後仍有 pending async 操作
+      await controller.close();
+
       // 透過替換 widget 觸發 dispose
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(body: Container()),
       ));
-
-      await controller.close();
     });
   });
 }
