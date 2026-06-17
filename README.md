@@ -19,21 +19,42 @@ Flutter app(Face ID)→ Tailscale VPN → Go proxy(稽核 log)→ ttyd(basic aut
 | `deploy/` | ttyd 設定、Tailscale 設定指引、launchd、systemd | — |
 | `docs/` | 決策記錄、契約規格、需求文件、上游回饋 | — |
 
+## 快速開始
+
+完整使用說明：[`docs/USAGE.md`](./docs/USAGE.md)
+
+```bash
+# 1. 編譯 proxy
+cd server && go build -o app-tunnel-proxy . && cd ..
+
+# 2. 啟動服務
+./deploy/scripts/start.sh -u "帳號:密碼"
+
+# 3. 配對（手機掃 QR）
+./server/app-tunnel-proxy enroll \
+  -endpoint "http://<tailscale-ip>:8080/ws" \
+  -ttyd-user "帳號" -ttyd-pass "密碼"
+
+# 4. 手機開 app → Face ID → Connect Terminal
+```
+
 ## 文件
 
-- 連線/認證契約:[`docs/contract.md`](./docs/contract.md)
-- 技術決策記錄:[`docs/tech-decisions.md`](./docs/tech-decisions.md)
-- proxy 建置:[`server/README.md`](./server/README.md)
-- 部署常駐:[`deploy/README.md`](./deploy/README.md)
+- 使用說明：[`docs/USAGE.md`](./docs/USAGE.md)
+- 連線/認證契約：[`docs/contract.md`](./docs/contract.md)
+- 技術決策記錄：[`docs/tech-decisions.md`](./docs/tech-decisions.md)
+- 部署指引：[`deploy/README.md`](./deploy/README.md)
+- 變更記錄：[`CHANGELOG.md`](./CHANGELOG.md)
 
 ## 開發狀態
 
-- [x] 技術選型(Go proxy / monorepo / 原生 Flutter 終端機 / Tailscale)
-- [x] server proxy + QR enrollment
-- [x] server 硬化(單元測試 / CI gate / 稽核 log / graceful shutdown / timeout)
-- [ ] server 適配 Tailscale(移除認證閘道、簡化 enroll)
-- [ ] app Flutter 實作
-- [ ] 部署實機驗證(Tailscale 手機→主機連線)
+- [x] 技術選型（Go proxy / monorepo / 原生 Flutter 終端機 / Tailscale）
+- [x] Server proxy + QR enrollment + 稽核 log + graceful shutdown
+- [x] Server 適配 Tailscale（移除認證閘道、簡化 enroll v2）
+- [x] App Flutter 完整實作（生物辨識 / secure storage / QR 配對 / WS 協議 / 終端機 UI）
+- [x] Deploy 腳本與設定指引
+- [x] 整合測試 + 安全審查（B+）+ Phase 4 品質評估（A 級）
+- [ ] 部署實機驗證（Tailscale 手機→主機連線）
 
 ## 授權
 
