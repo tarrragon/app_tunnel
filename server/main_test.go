@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// newTestHandler 建一個假 ttyd 後端 + 認證閘道,供測試。
-func newTestHandler(t *testing.T, token string, upstream http.HandlerFunc) http.Handler {
+// newTestHandler 建一個假 ttyd 後端 + 透明 proxy,供測試。
+func newTestHandler(t *testing.T, upstream http.HandlerFunc) http.Handler {
 	t.Helper()
 	ttyd := httptest.NewServer(upstream)
 	t.Cleanup(ttyd.Close)
@@ -20,42 +20,33 @@ func newTestHandler(t *testing.T, token string, upstream http.HandlerFunc) http.
 		t.Fatal(err)
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return authProxyHandler([]byte(token), target, 2*time.Second, logger)
+	return proxyHandler(target, 2*time.Second, logger)
 }
 
-func TestAuthGate_NoToken_404(t *testing.T) {
-	h := newTestHandler(t, "secret", func(w http.ResponseWriter, r *http.Request) {
-		t.Error("無 token 不該轉發到 ttyd")
+func TestProxy_TransparentForward(t *testing.T) {
+	h := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ttyd-ok"))
 	})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/ws", nil))
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("want 404, got %d", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", rec.Code)
+	}
+	if rec.Body.String() != "ttyd-ok" {
+		t.Fatalf("want ttyd-ok, got %q", rec.Body.String())
 	}
 }
 
-func TestAuthGate_WrongToken_404(t *testing.T) {
-	h := newTestHandler(t, "secret", func(w http.ResponseWriter, r *http.Request) {
-		t.Error("錯 token 不該轉發到 ttyd")
-	})
-	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.Header.Set(tokenHeader, "wrong")
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("want 404, got %d", rec.Code)
-	}
-}
-
-func TestAuthGate_GoodToken_Forwarded_AndStripsToken(t *testing.T) {
-	h := newTestHandler(t, "secret", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get(tokenHeader) != "" {
-			t.Error("通過後本機 token 不該上傳給 ttyd")
+func TestProxy_PreservesAuthorizationHeader(t *testing.T) {
+	h := newTestHandler(t, func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got == "" {
+			t.Error("Authorization header 應原樣轉發給 ttyd")
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.Header.Set(tokenHeader, "secret")
+	req.Header.Set("Authorization", "Basic dXNlcjpwYXNz")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusNoContent {
@@ -63,19 +54,26 @@ func TestAuthGate_GoodToken_Forwarded_AndStripsToken(t *testing.T) {
 	}
 }
 
-func TestClientIP_PrefersCFHeader(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = "127.0.0.1:5555"
-	req.Header.Set("Cf-Connecting-Ip", "203.0.113.9")
-	if got := clientIP(req); got != "203.0.113.9" {
-		t.Fatalf("want CF-Connecting-Ip, got %q", got)
+func TestProxy_BackendDown_502(t *testing.T) {
+	// 指向一個不存在的後端。
+	target, _ := url.Parse("http://127.0.0.1:1")
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	h := proxyHandler(target, 1*time.Second, logger)
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rec.Code != http.StatusBadGateway {
+		t.Fatalf("want 502, got %d", rec.Code)
 	}
 }
 
-func TestClientIP_FallsBackToRemoteAddr(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = "127.0.0.1:5555"
-	if got := clientIP(req); got != "127.0.0.1:5555" {
-		t.Fatalf("want RemoteAddr, got %q", got)
+func TestIsWebSocketUpgrade(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	if isWebSocketUpgrade(req) {
+		t.Fatal("無 Upgrade header 不應回傳 true")
+	}
+	req.Header.Set("Upgrade", "websocket")
+	if !isWebSocketUpgrade(req) {
+		t.Fatal("有 Upgrade: websocket 應回傳 true")
 	}
 }
