@@ -43,3 +43,33 @@ token.txt
 __pycache__/
 *.pyc
 .venv/
+
+# Claude Code 框架 runtime state(session/hook/sync 執行時生成,絕不進 repo)
+# 來源:sync_exclude_manifest.GITIGNORE_EXPECTED(SOT)+ gitignore-check hook
+# 背景:PC-019 死循環——runtime state 被 git tracked 會造成 dirty tree 阻擋 worktree fork
+.claude/.pytest_cache/
+.claude/.sync-conflicts/
+.claude/.sync-state.json
+.claude/.version-release.yaml
+.claude/.zhtw-mcp-skip
+.claude/ARCHITECTURE_REVIEW_REQUIRED
+.claude/PM_INTERVENTION_REQUIRED
+.claude/TASK_AVOIDANCE_FIX_MODE
+.claude/analyses/
+.claude/dispatch-active.json
+.claude/dispatch-active.lock
+.claude/handoff/
+.claude/hook-logs/
+.claude/hook-state/
+.claude/hooks/hook-logs/
+.claude/migration-backups/
+.claude/plans/
+.claude/pm-status.json
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+.claude/state/
+.claude/sync-preserve.yaml
+.claude/worktrees/
+
+# 測試覆蓋率報告
+coverage/
