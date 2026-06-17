@@ -34,6 +34,7 @@ class ConnectionManager {
   final Duration _connectTimeout;
 
   final _stateController = StreamController<ConnectionState>.broadcast();
+  final _outputController = StreamController<dynamic>.broadcast();
   ConnectionState _state = ConnectionState.idle;
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _channelSubscription;
@@ -47,6 +48,16 @@ class ConnectionManager {
 
   /// 狀態變更事件流。
   Stream<ConnectionState> get stateStream => _stateController.stream;
+
+  /// 需求：[UC-02] 伺服器輸出事件流（WS 收到的 raw frame）。
+  /// broadcast stream，訂閱者在連線後收到資料。
+  Stream<dynamic> get outputStream => _outputController.stream;
+
+  /// 需求：[UC-02] 發送資料到 WS（鍵盤輸入 / resize 訊框）。
+  void sendData(dynamic data) {
+    if (_state != ConnectionState.connected || _channel == null) return;
+    _channel!.sink.add(data);
+  }
 
   /// 需求：[UC-02] 主場景 — 建立連線
   /// 流程：生物辨識 -> 載入憑證 -> 建立 WS 連線
@@ -85,6 +96,7 @@ class ConnectionManager {
   /// 釋放資源。
   Future<void> dispose() async {
     await _closeChannel();
+    await _outputController.close();
     await _stateController.close();
   }
 
@@ -146,7 +158,7 @@ class ConnectionManager {
   void _listenForDisconnection() {
     _channelSubscription?.cancel();
     _channelSubscription = _channel?.stream.listen(
-      null,
+      _outputController.add,
       onDone: () {
         if (_state == ConnectionState.connected) {
           _transitionTo(ConnectionState.disconnected);

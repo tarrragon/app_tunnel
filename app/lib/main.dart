@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+
+import 'package:go_router/go_router.dart';
+
 import 'package:app_tunnel/core/router/app_router.dart';
+import 'package:app_tunnel/features/credential/credential_repository.dart';
+import 'package:app_tunnel/features/credential/secure_storage_credential_repository.dart';
 
 void main() {
-  runApp(const AppTunnelApp());
+  final credentialRepository = SecureStorageCredentialRepository();
+  runApp(AppTunnelApp(credentialRepository: credentialRepository));
 }
 
 /// Root widget for the app_tunnel application.
 class AppTunnelApp extends StatelessWidget {
-  const AppTunnelApp({super.key});
+  AppTunnelApp({required CredentialRepository credentialRepository, super.key})
+      : _router = createAppRouter(credentialRepository: credentialRepository);
+
+  final GoRouter _router;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +26,7 @@ class AppTunnelApp extends StatelessWidget {
         colorSchemeSeed: Colors.blue,
         useMaterial3: true,
       ),
-      routerConfig: appRouter,
+      routerConfig: _router,
     );
   }
 }
