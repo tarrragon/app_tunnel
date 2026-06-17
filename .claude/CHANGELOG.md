@@ -1,3 +1,35 @@
+## [1.54.1] - 2026-06-17
+
+### Summary
+chore: 傳播刪除 test_monorepo_version_sync.py 孤兒
+
+---
+
+## [1.54.0] - 2026-06-17
+
+### Summary
+feat: cmd_start_version 多專案類型整合（）; feat: schema 擴展 + 專案偵測 + yaml/toml bump（/100/101）; feat: 擴展版本源候選 + resolve_version_source（） (+1 more)
+
+Changes: 3 feat, 1 docs
+
+- feat: cmd_start_version 多專案類型整合（）
+- feat: schema 擴展 + 專案偵測 + yaml/toml bump（/100/101）
+- feat: 擴展版本源候選 + resolve_version_source（）
+- docs: SKILL.md 多專案類型文件更新（）
+
+---
+
+## [1.53.2] - 2026-06-17
+
+### Summary
+fix: 移除 repo 常數 .git 後綴致 gh --repo 解析失敗
+
+Changes: 1 fix
+
+- fix: 移除 repo 常數 .git 後綴致 gh --repo 解析失敗
+
+---
+
 ## [1.53.1] - 2026-06-17
 
 ### Summary
