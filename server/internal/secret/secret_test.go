@@ -7,7 +7,7 @@ import (
 )
 
 func TestStoreLoad_FileRoundtrip_And0600(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "sub", "token") // 含未建立的子目錄
+	p := filepath.Join(t.TempDir(), "sub", "credential") // 含未建立的子目錄
 	cfg := Config{Backend: "file", FilePath: p}
 
 	if err := Store(cfg, "abc123"); err != nil {
@@ -30,7 +30,7 @@ func TestStoreLoad_FileRoundtrip_And0600(t *testing.T) {
 }
 
 func TestLoadFile_RejectsLoosePerms(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "token")
+	p := filepath.Join(t.TempDir(), "credential")
 	if err := os.WriteFile(p, []byte("secret"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestLoadFile_RejectsLoosePerms(t *testing.T) {
 }
 
 func TestLoadFile_TrimsWhitespace(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "token")
+	p := filepath.Join(t.TempDir(), "credential")
 	if err := os.WriteFile(p, []byte("  spaced\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

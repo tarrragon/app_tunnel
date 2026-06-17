@@ -1,7 +1,7 @@
-// Package secret 提供可插拔的密鑰載入後端。
+// Package secret 提供可插拔的通用憑證儲存後端。
 //
 // 跨平台設計:macOS 用 keychain(security CLI)、Linux 與通用情境用 file(0600)、
-// CI/容器用 env。proxy 啟動時依設定挑後端,密鑰本體不寫進 repo。
+// CI/容器用 env。啟動時依設定挑後端,憑證本體不寫進 repo。
 package secret
 
 import (
@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// Config 指定密鑰來源後端與其參數。
+// Config 指定憑證來源後端與其參數。
 type Config struct {
 	Backend string // "file" | "keychain" | "env"
 
@@ -28,7 +28,7 @@ type Config struct {
 	EnvVar string
 }
 
-// Load 依設定的後端取得密鑰,回傳去除前後空白的字串。
+// Load 依設定的後端取得憑證,回傳去除前後空白的字串。
 func Load(c Config) (string, error) {
 	switch c.Backend {
 	case "file":
@@ -46,7 +46,7 @@ func Load(c Config) (string, error) {
 	}
 }
 
-// Store 把密鑰寫入指定後端(enroll 用)。file 寫 0600、keychain 用 security -U 覆寫。env 唯讀。
+// Store 把憑證寫入指定後端(enroll 用)。file 寫 0600、keychain 用 security -U 覆寫。env 唯讀。
 func Store(c Config, value string) error {
 	switch c.Backend {
 	case "file":
@@ -68,7 +68,7 @@ func Store(c Config, value string) error {
 		if c.KeychainService == "" || c.KeychainAccount == "" {
 			return fmt.Errorf("secret: keychain 後端需要 service 與 account")
 		}
-		// -U:已存在則更新。注意密鑰會短暫出現在 process args(自用本機可接受)。
+		// -U:已存在則更新。注意憑證會短暫出現在 process args(自用本機可接受)。
 		return exec.Command("security", "add-generic-password", "-U",
 			"-s", c.KeychainService, "-a", c.KeychainAccount, "-w", value).Run()
 	case "env":
@@ -78,7 +78,7 @@ func Store(c Config, value string) error {
 	}
 }
 
-// loadFile 從 0600 檔讀密鑰。權限過寬即拒絕,避免同群組/他人可讀。
+// loadFile 從 0600 檔讀憑證。權限過寬即拒絕,避免同群組/他人可讀。
 func loadFile(path string) (string, error) {
 	if path == "" {
 		return "", fmt.Errorf("secret: file 後端需要 -secret-file 路徑")
