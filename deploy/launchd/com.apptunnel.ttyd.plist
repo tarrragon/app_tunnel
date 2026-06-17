@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS launchd template: ttyd (PTY server). Manual start/stop only.
+     Start: launchctl bootstrap gui/$(id -u) com.apptunnel.ttyd.plist
+     Stop:  launchctl bootout gui/$(id -u)/com.apptunnel.ttyd
+     Replace <YOU> and credential. Do NOT place in ~/Library/LaunchAgents. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.apptunnel.ttyd</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/ttyd</string>
+    <string>--port</string><string>7681</string>
+    <string>--interface</string><string>127.0.0.1</string>
+    <string>--credential</string><string>user:CHANGE_ME</string>
+    <string>/bin/zsh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/tmp/app-tunnel-ttyd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/app-tunnel-ttyd.log</string>
+</dict>
+</plist>
