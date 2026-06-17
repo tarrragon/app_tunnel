@@ -19,4 +19,4 @@ release_workflow: trunk
 tag_format: "v{version}"
 
 # worklog 巢狀路徑範本（支援 {version} / {major_minor} / {major} 佔位符）
-worklog_path_pattern: "docs/work-logs/v{major}/v{major_minor}/v{version}"
+worklog_path_pattern: "docs/work-logs/v{version}"
