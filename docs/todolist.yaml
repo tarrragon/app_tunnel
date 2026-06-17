@@ -1,0 +1,45 @@
+versions:
+  - version: "1.0.0"
+    title: "MVP 遠端終端機"
+    status: completed
+    waves:
+      - wave: 1
+        title: "Server 遷移"
+        status: completed
+      - wave: 2
+        title: "App 骨架"
+        status: completed
+      - wave: 3
+        title: "App 核心模組"
+        status: completed
+      - wave: 4
+        title: "連線/終端機"
+        status: completed
+      - wave: 5
+        title: "畫面整合"
+        status: completed
+      - wave: 6
+        title: "Deploy"
+        status: completed
+      - wave: 7
+        title: "整合測試+安全"
+        status: completed
+      - wave: 8
+        title: "Phase 4 評估"
+        status: completed
+      - wave: 9
+        title: "P2 技術債"
+        status: completed
+    technical_debt:
+      - id: TD-P3-001
+        description: "enrollment_screen 字串比對狀態判斷"
+        priority: P3
+        target_version: null
+      - id: TD-P3-002
+        description: "terminal_screen resize magic numbers"
+        priority: P3
+        target_version: null
+      - id: TD-P3-003
+        description: "enroll.go logger 不一致（log vs slog）"
+        priority: P3
+        target_version: null
