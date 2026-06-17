@@ -149,11 +149,48 @@ class TerminalBuffer {
 
   void _eraseLine(int param) {
     _ensureCursorRow();
+    final line = _lines[_cursorRow];
     switch (param) {
-      case 0: // 游標到行尾 — 簡化為清除整行
-        _lines[_cursorRow] = TerminalLine();
-      case 1: // 行首到游標
-        _lines[_cursorRow] = TerminalLine();
+      case 0: // 游標到行尾：保留游標前的內容
+        final kept = <StyledSegment>[];
+        var col = 0;
+        for (final seg in line.segments) {
+          if (col >= _cursorCol) break;
+          if (col + seg.text.length <= _cursorCol) {
+            kept.add(seg);
+          } else {
+            kept.add(StyledSegment(
+              text: seg.text.substring(0, _cursorCol - col),
+              foreground: seg.foreground,
+              background: seg.background,
+              isBold: seg.isBold,
+            ));
+          }
+          col += seg.text.length;
+        }
+        _lines[_cursorRow] = TerminalLine(kept);
+      case 1: // 行首到游標：保留游標後的內容
+        final kept = <StyledSegment>[];
+        var col = 0;
+        for (final seg in line.segments) {
+          final segEnd = col + seg.text.length;
+          if (segEnd <= _cursorCol) {
+            col = segEnd;
+            continue;
+          }
+          if (col < _cursorCol) {
+            kept.add(StyledSegment(
+              text: seg.text.substring(_cursorCol - col),
+              foreground: seg.foreground,
+              background: seg.background,
+              isBold: seg.isBold,
+            ));
+          } else {
+            kept.add(seg);
+          }
+          col = segEnd;
+        }
+        _lines[_cursorRow] = TerminalLine(kept);
       case 2: // 整行
         _lines[_cursorRow] = TerminalLine();
     }

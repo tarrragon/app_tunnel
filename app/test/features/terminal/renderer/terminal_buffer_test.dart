@@ -92,9 +92,29 @@ void main() {
       expect(buffer.lines[0].plainText, '');
     });
 
-    test('EL 0 清除當前行', () {
-      buffer.writeTokens(parser.parse('hello'));
+    test('EL 0 清除游標到行尾', () {
+      buffer.writeTokens(parser.parse('hello world'));
+      // 游標回到 col 5
+      buffer.writeTokens(parser.parse('\x1B[6D'));
+      // EL 0：清除 col 5 到行尾，保留 "hello"
       buffer.writeTokens(parser.parse('\x1B[K'));
+
+      expect(buffer.lines[0].plainText, 'hello');
+    });
+
+    test('EL 1 清除行首到游標', () {
+      buffer.writeTokens(parser.parse('hello world'));
+      // 游標回到 col 5
+      buffer.writeTokens(parser.parse('\x1B[6D'));
+      // EL 1：清除行首到 col 5，保留 " world"
+      buffer.writeTokens(parser.parse('\x1B[1K'));
+
+      expect(buffer.lines[0].plainText, ' world');
+    });
+
+    test('EL 2 清除整行', () {
+      buffer.writeTokens(parser.parse('hello'));
+      buffer.writeTokens(parser.parse('\x1B[2K'));
 
       expect(buffer.lines[0].plainText, '');
     });

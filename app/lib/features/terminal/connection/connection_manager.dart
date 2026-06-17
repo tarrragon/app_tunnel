@@ -218,7 +218,11 @@ class ConnectionManager {
     Uri uri,
     Map<String, String> headers,
   ) {
-    return WebSocketChannel.connect(uri, protocols: ['tty']);
+    return WebSocketChannel.connect(
+      uri,
+      protocols: ['tty'],
+      headers: headers,
+    );
   }
 }
 
