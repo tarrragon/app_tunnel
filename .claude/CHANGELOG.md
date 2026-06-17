@@ -1,3 +1,60 @@
+## [1.53.1] - 2026-06-17
+
+### Summary
+docs: 新增 Behavioral Core Principle 行為核心準則; chore: pull .claude 更新（上游 aa4f0038）
+
+Changes: 1 docs, 1 chore
+
+- docs: 新增 Behavioral Core Principle 行為核心準則
+- chore: pull .claude 更新（上游 aa4f0038）
+
+---
+
+## [1.53.0] - 2026-06-17
+
+### Summary
+refactor: REQUIRED 清單 derive 自 manifest GITIGNORE_EXPECTED
+
+Changes: 1 refactor
+
+- refactor: REQUIRED 清單 derive 自 manifest GITIGNORE_EXPECTED
+
+---
+
+## [1.52.6] - 2026-06-17
+
+### Summary
+fix: 補 TASK_AVOIDANCE_FIX_MODE 入 sync 排除清單
+
+Changes: 1 fix
+
+- fix: 補 TASK_AVOIDANCE_FIX_MODE 入 sync 排除清單
+
+---
+
+## [1.52.5] - 2026-06-17
+
+### Summary
+docs: 新增 ARCH-TUNL-001 local settings hook 註冊幽靈 + 登錄 TUNL 專案代號
+
+Changes: 1 docs
+
+- docs: 新增 ARCH-TUNL-001 local settings hook 註冊幽靈 + 登錄 TUNL 專案代號
+
+---
+
+## [1.52.4] - 2026-06-17
+
+### Summary
+fix: 固化 hook 註冊單一來源原則 + 偵測 local 層 latent ghost; chore: pull .claude 更新（上游 d2424984）
+
+Changes: 1 fix, 1 chore
+
+- fix: 固化 hook 註冊單一來源原則 + 偵測 local 層 latent ghost
+- chore: pull .claude 更新（上游 d2424984）
+
+---
+
 ## [1.52.3] - 2026-06-17
 
 ### Summary
