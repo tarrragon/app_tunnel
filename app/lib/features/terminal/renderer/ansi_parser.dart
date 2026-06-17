@@ -1,0 +1,230 @@
+import 'package:flutter/painting.dart';
+
+/// 需求：[SPEC-004 FR-04] ANSI escape sequence 解析
+/// 將終端機輸出中的 ANSI 控制碼解析為結構化的文字片段。
+/// 支援 SGR 色彩（前景/背景 8+16 色）與基本游標控制。
+
+/// 單一文字片段，帶有 ANSI 樣式屬性。
+class StyledSegment {
+  const StyledSegment({
+    required this.text,
+    this.foreground,
+    this.background,
+    this.isBold = false,
+  });
+
+  final String text;
+  final Color? foreground;
+  final Color? background;
+  final bool isBold;
+}
+
+/// 游標移動指令（CUU/CUD/CUF/CUB）。
+class CursorMove {
+  const CursorMove({required this.direction, this.count = 1});
+
+  final CursorDirection direction;
+  final int count;
+}
+
+enum CursorDirection { up, down, forward, backward }
+
+/// 清除指令（ED/EL）。
+class EraseCommand {
+  const EraseCommand({required this.type, this.param = 0});
+
+  final EraseType type;
+
+  /// 0 = 游標到末尾, 1 = 開頭到游標, 2 = 全部
+  final int param;
+}
+
+enum EraseType { display, line }
+
+/// ANSI 解析結果：文字片段、游標移動、或清除指令。
+sealed class AnsiToken {}
+
+class TextToken extends AnsiToken {
+  TextToken(this.segment);
+  final StyledSegment segment;
+}
+
+class CursorToken extends AnsiToken {
+  CursorToken(this.move);
+  final CursorMove move;
+}
+
+class EraseToken extends AnsiToken {
+  EraseToken(this.command);
+  final EraseCommand command;
+}
+
+/// 需求：[SPEC-004 FR-04] ANSI 色彩與控制碼解析器
+/// 約束：初版支援 SGR 8+16 色、CUU/CUD/CUF/CUB、ED/EL
+class AnsiParser {
+  Color? _currentForeground;
+  Color? _currentBackground;
+  bool _currentBold = false;
+
+  /// 標準 8 色 ANSI 調色盤。
+  static const List<Color> standardColors = [
+    Color(0xFF000000), // black
+    Color(0xFFCD0000), // red
+    Color(0xFF00CD00), // green
+    Color(0xFFCDCD00), // yellow
+    Color(0xFF0000EE), // blue
+    Color(0xFFCD00CD), // magenta
+    Color(0xFF00CDCD), // cyan
+    Color(0xFFE5E5E5), // white
+  ];
+
+  /// 亮色 8 色 ANSI 調色盤。
+  static const List<Color> brightColors = [
+    Color(0xFF7F7F7F), // bright black (gray)
+    Color(0xFFFF0000), // bright red
+    Color(0xFF00FF00), // bright green
+    Color(0xFFFFFF00), // bright yellow
+    Color(0xFF5C5CFF), // bright blue
+    Color(0xFFFF00FF), // bright magenta
+    Color(0xFF00FFFF), // bright cyan
+    Color(0xFFFFFFFF), // bright white
+  ];
+
+  /// ESC[ 序列的正規表達式。
+  static final RegExp _escapePattern = RegExp(r'\x1B\[([0-9;]*)([A-Za-z])');
+
+  /// 解析含 ANSI escape 的原始文字為 token 串列。
+  List<AnsiToken> parse(String input) {
+    final tokens = <AnsiToken>[];
+    var lastEnd = 0;
+
+    for (final match in _escapePattern.allMatches(input)) {
+      // 收集 escape 前的純文字
+      if (match.start > lastEnd) {
+        final text = input.substring(lastEnd, match.start);
+        if (text.isNotEmpty) {
+          tokens.add(TextToken(_buildSegment(text)));
+        }
+      }
+
+      final params = match.group(1) ?? '';
+      final command = match.group(2) ?? '';
+      _processEscapeSequence(params, command, tokens);
+
+      lastEnd = match.end;
+    }
+
+    // 收集最後一段純文字
+    if (lastEnd < input.length) {
+      final text = input.substring(lastEnd);
+      if (text.isNotEmpty) {
+        tokens.add(TextToken(_buildSegment(text)));
+      }
+    }
+
+    return tokens;
+  }
+
+  /// 重置解析器狀態。
+  void reset() {
+    _currentForeground = null;
+    _currentBackground = null;
+    _currentBold = false;
+  }
+
+  StyledSegment _buildSegment(String text) {
+    return StyledSegment(
+      text: text,
+      foreground: _currentForeground,
+      background: _currentBackground,
+      isBold: _currentBold,
+    );
+  }
+
+  void _processEscapeSequence(
+    String params,
+    String command,
+    List<AnsiToken> tokens,
+  ) {
+    switch (command) {
+      case 'm':
+        _applySgr(params);
+      case 'A':
+        tokens.add(CursorToken(CursorMove(
+          direction: CursorDirection.up,
+          count: _parseIntParam(params),
+        )));
+      case 'B':
+        tokens.add(CursorToken(CursorMove(
+          direction: CursorDirection.down,
+          count: _parseIntParam(params),
+        )));
+      case 'C':
+        tokens.add(CursorToken(CursorMove(
+          direction: CursorDirection.forward,
+          count: _parseIntParam(params),
+        )));
+      case 'D':
+        tokens.add(CursorToken(CursorMove(
+          direction: CursorDirection.backward,
+          count: _parseIntParam(params),
+        )));
+      case 'J':
+        tokens.add(EraseToken(EraseCommand(
+          type: EraseType.display,
+          param: _parseIntParamOrZero(params),
+        )));
+      case 'K':
+        tokens.add(EraseToken(EraseCommand(
+          type: EraseType.line,
+          param: _parseIntParamOrZero(params),
+        )));
+    }
+  }
+
+  int _parseIntParam(String params) {
+    if (params.isEmpty) return 1;
+    return int.tryParse(params) ?? 1;
+  }
+
+  int _parseIntParamOrZero(String params) {
+    if (params.isEmpty) return 0;
+    return int.tryParse(params) ?? 0;
+  }
+
+  /// 套用 SGR（Select Graphic Rendition）參數。
+  void _applySgr(String params) {
+    if (params.isEmpty) {
+      reset();
+      return;
+    }
+
+    final codes = params.split(';').map((s) => int.tryParse(s) ?? 0);
+    for (final code in codes) {
+      _applySingleSgrCode(code);
+    }
+  }
+
+  void _applySingleSgrCode(int code) {
+    switch (code) {
+      case 0:
+        reset();
+      case 1:
+        _currentBold = true;
+      case 22:
+        _currentBold = false;
+      case >= 30 && <= 37:
+        _currentForeground = standardColors[code - 30];
+      case 39:
+        _currentForeground = null;
+      case >= 40 && <= 47:
+        _currentBackground = standardColors[code - 40];
+      case 49:
+        _currentBackground = null;
+      case >= 90 && <= 97:
+        _currentForeground = brightColors[code - 90];
+      case >= 100 && <= 107:
+        _currentBackground = brightColors[code - 100];
+    }
+  }
+}
