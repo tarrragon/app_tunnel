@@ -22,7 +22,8 @@ class _FakeBiometricService implements BiometricService {
   Future<bool> isAvailable() async => true;
 
   @override
-  Future<bool> authenticate() async => authResult;
+  Future<bool> authenticate({required String localizedReason}) async =>
+      authResult;
 }
 
 class _FakeCredentialRepository implements CredentialRepository {
@@ -127,7 +128,7 @@ void main() {
       final states = <cs.ConnectionState>[];
       manager.stateStream.listen(states.add);
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       // Allow broadcast stream events to propagate
       await Future<void>.delayed(Duration.zero);
 
@@ -142,11 +143,11 @@ void main() {
 
     test('does nothing if already connected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       final states = <cs.ConnectionState>[];
       manager.stateStream.listen(states.add);
-      await manager.connect(); // second call should be no-op
+      await manager.connect(biometricReason: 'test reason'); // second call should be no-op
 
       expect(states, isEmpty);
       await manager.dispose();
@@ -156,7 +157,7 @@ void main() {
   group('connect - 認證失敗', () {
     test('biometric failure transitions to error', () async {
       final manager = createManager(biometricResult: false);
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(
@@ -170,7 +171,7 @@ void main() {
     test('missing credential transitions to error', () async {
       final manager = createManager(hasCredential: false);
       // biometric passes, but no credential
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(manager.lastError?.type, ConnectionErrorType.unknown);
@@ -185,7 +186,7 @@ void main() {
         shouldTimeout: true,
         connectTimeout: const Duration(milliseconds: 50),
       );
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(manager.lastError?.type, ConnectionErrorType.timeout);
@@ -197,7 +198,7 @@ void main() {
   group('disconnect', () {
     test('transitions to disconnected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       await manager.disconnect();
 
       expect(manager.state, cs.ConnectionState.disconnected);
@@ -208,11 +209,11 @@ void main() {
   group('reconnect', () {
     test('disconnect then reconnect transitions back to connected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       expect(manager.state, cs.ConnectionState.connected);
 
       // Reconnect will close old channel, create new one via factory
-      await manager.reconnect();
+      await manager.reconnect(biometricReason: 'test reason');
       expect(manager.state, cs.ConnectionState.connected);
 
       await manager.dispose();
@@ -222,7 +223,7 @@ void main() {
   group('server-initiated disconnect', () {
     test('server close transitions connected -> disconnected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       fakeChannel.simulateServerClose();
       // Allow microtask to process
@@ -234,7 +235,7 @@ void main() {
 
     test('stream error transitions to error state', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       fakeChannel.simulateError(Exception('network lost'));
       await Future<void>.delayed(Duration.zero);
@@ -254,7 +255,7 @@ void main() {
       final states = <cs.ConnectionState>[];
       manager.stateStream.listen(states.add);
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       await Future<void>.delayed(Duration.zero);
       await manager.disconnect();
       await Future<void>.delayed(Duration.zero);

@@ -22,7 +22,7 @@ class _FakeBiometricService implements BiometricService {
   @override
   Future<bool> isAvailable() async => false;
   @override
-  Future<bool> authenticate() async => false;
+  Future<bool> authenticate({required String localizedReason}) async => false;
 }
 
 void main() {

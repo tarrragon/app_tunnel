@@ -24,7 +24,8 @@ class _FakeBiometricService implements BiometricService {
   Future<bool> isAvailable() async => true;
 
   @override
-  Future<bool> authenticate() async => authResult;
+  Future<bool> authenticate({required String localizedReason}) async =>
+      authResult;
 }
 
 class _FakeCredentialRepository implements CredentialRepository {

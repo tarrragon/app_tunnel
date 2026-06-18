@@ -63,7 +63,10 @@ class ConnectionManager {
 
   /// 需求：[UC-02] 主場景 — 建立連線
   /// 流程：生物辨識 -> 載入憑證 -> 建立 WS 連線
-  Future<void> connect() async {
+  ///
+  /// [biometricReason] 為 OS 生物辨識提示文字，由持有 BuildContext 的呼叫端
+  /// （TerminalScreen）透過 AppLocalizations 注入（1.2.0-W1-027）。
+  Future<void> connect({required String biometricReason}) async {
     if (_state == ConnectionState.connecting ||
         _state == ConnectionState.connected) {
       return;
@@ -71,7 +74,7 @@ class ConnectionManager {
     _transitionTo(ConnectionState.connecting);
 
     try {
-      await _authenticateWithBiometrics();
+      await _authenticateWithBiometrics(biometricReason);
       final credential = await _loadCredential();
       await _establishWebSocket(credential);
       _transitionTo(ConnectionState.connected);
@@ -89,10 +92,10 @@ class ConnectionManager {
 
   /// 需求：[UC-02] 重新連線
   /// 先斷開既有連線再重新執行 connect 流程。
-  Future<void> reconnect() async {
+  Future<void> reconnect({required String biometricReason}) async {
     await _closeChannel();
     _transitionTo(ConnectionState.idle);
-    await connect();
+    await connect(biometricReason: biometricReason);
   }
 
   /// 釋放資源。
@@ -105,8 +108,9 @@ class ConnectionManager {
   // -- 私有方法 --
 
   /// 需求：[SPEC-004 FR-01] 連線前生物辨識驗證
-  Future<void> _authenticateWithBiometrics() async {
-    final passed = await _biometricService.authenticate();
+  Future<void> _authenticateWithBiometrics(String localizedReason) async {
+    final passed =
+        await _biometricService.authenticate(localizedReason: localizedReason);
     if (!passed) {
       throw const ConnectionError(
         type: ConnectionErrorType.authenticationFailed,

@@ -6,7 +6,10 @@ abstract interface class BiometricService {
 
   /// 執行生物辨識驗證。
   ///
+  /// [localizedReason] 為 OS 生物辨識提示文字，由持有 BuildContext 的呼叫端
+  /// 透過 AppLocalizations 取得後注入；服務層不查詢 l10n（本身無 context）。
+  ///
   /// 回傳 `true` 表示驗證成功；`false` 表示使用者取消或驗證失敗。
   /// 驗證失敗時不洩漏任何憑證資訊。
-  Future<bool> authenticate();
+  Future<bool> authenticate({required String localizedReason});
 }

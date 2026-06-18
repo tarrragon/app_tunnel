@@ -48,7 +48,7 @@ void main() {
       final states = <cs.ConnectionState>[];
       manager.stateStream.listen(states.add);
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       await Future<void>.delayed(Duration.zero);
 
       expect(manager.state, cs.ConnectionState.connected);
@@ -66,7 +66,7 @@ void main() {
       final received = <dynamic>[];
       manager.outputStream.listen(received.add);
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       fakeChannel.pushServerMessage('hello from server');
       await Future<void>.delayed(Duration.zero);
 
@@ -77,7 +77,7 @@ void main() {
     test('Given connected, When client sends data, '
         'Then it reaches the WS channel', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       manager.sendData('user input');
       expect(fakeChannel.sentFromClient, ['user input']);
@@ -90,7 +90,7 @@ void main() {
       biometricService.authResult = false;
       final manager = createManager();
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(
@@ -105,7 +105,7 @@ void main() {
       await repository.delete();
       final manager = createManager();
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(manager.lastError?.type, ConnectionErrorType.unknown);
@@ -119,7 +119,7 @@ void main() {
         connectTimeout: const Duration(milliseconds: 50),
       );
 
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       expect(manager.lastError?.type, ConnectionErrorType.timeout);
@@ -129,7 +129,7 @@ void main() {
     test('Given connected, When server closes, '
         'Then state transitions to disconnected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       fakeChannel.closeFromServer();
       await Future<void>.delayed(Duration.zero);
@@ -141,7 +141,7 @@ void main() {
     test('Given connected, When disconnect called, '
         'Then state is disconnected and channel is closed', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       await manager.disconnect();
 
@@ -153,10 +153,10 @@ void main() {
     test('Given disconnected, When reconnect, '
         'Then state transitions back to connected', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       await manager.disconnect();
 
-      await manager.reconnect();
+      await manager.reconnect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.connected);
       await manager.dispose();
@@ -165,7 +165,7 @@ void main() {
     test('Given connected, When stream error occurs, '
         'Then state is error with networkOffline', () async {
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       fakeChannel.pushError(Exception('network lost'));
       await Future<void>.delayed(Duration.zero);
@@ -187,7 +187,7 @@ void main() {
       manager.outputStream.listen(received.add);
 
       // Connect
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       await Future<void>.delayed(Duration.zero);
 
       // Exchange data
