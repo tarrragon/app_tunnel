@@ -23,6 +23,14 @@ Flutter app(Face ID)→ Tailscale VPN → Go proxy(稽核 log)→ ttyd(basic aut
 
 完整使用說明：[`docs/USAGE.md`](./docs/USAGE.md)
 
+一鍵（自動檢查依賴、缺就安裝、編譯、起服務）：
+
+```bash
+./bootstrap.sh -u "帳號:密碼"
+```
+
+或手動分步：
+
 ```bash
 # 1. 編譯 proxy
 cd server && go build -o app-tunnel-proxy . && cd ..

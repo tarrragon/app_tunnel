@@ -4,6 +4,22 @@
 
 ---
 
+## 快速開始（一鍵）
+
+懶得逐步跑 Step 1-4 的話，根目錄的 `bootstrap.sh` 會自動完成「檢查依賴 → 缺就安裝（ttyd/qrencode/Go）→ 編譯 proxy → 起服務」：
+
+```bash
+./bootstrap.sh -u "你的帳號:你的密碼"
+```
+
+旗標與 `deploy/scripts/start.sh` 一致（`-p` proxy port、`-t` ttyd port、`-b` proxy binary）。
+
+> Tailscale 例外：`bootstrap.sh` 只檢查不自動安裝（`tailscale up` 需互動式瀏覽器登入），缺失時會印出安裝指引。請先依 Step 3 把主機與手機加入同一 tailnet。
+>
+> 完成後跳到 Step 5 配對。仍想了解每一步細節，往下讀 Step 1-8。
+
+---
+
 ## 前置需求
 
 | 項目 | 主機 | 手機 |
