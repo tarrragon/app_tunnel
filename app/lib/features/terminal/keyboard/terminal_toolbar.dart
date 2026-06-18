@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'package:app_tunnel/core/constants/ui_constants.dart';
+import 'package:app_tunnel/core/theme/app_colors.dart';
+import 'package:app_tunnel/core/theme/app_spacing.dart';
+import 'package:app_tunnel/core/theme/app_typography.dart';
 import 'package:app_tunnel/features/terminal/keyboard/terminal_key_codes.dart';
 
 /// 需求：[SPEC-004 FR-04] 終端機特殊按鍵工具列
@@ -45,9 +48,19 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
 
   @override
   Widget build(BuildContext context) {
+    // 工具列為「第二 neutral 層」，以 surface token 與終端輸出區（kColorBg）
+    // 區分層次；頂部 token 邊框作為工具列與輸出區的外框分隔（1.2.0-W1-025）。
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      decoration: const BoxDecoration(
+        color: AppColors.kColorSurface,
+        border: Border(
+          top: BorderSide(color: AppColors.kColorBorder),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.kSpaceXs,
+        horizontal: AppSpacing.kSpaceSm,
+      ),
       child: Row(
         children: [
           _buildKeyButton('Esc', () => _sendKey(TerminalKeyCodes.escape)),
@@ -72,17 +85,18 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
   }
 
   Widget _buildCtrlButton() {
+    // Ctrl 啟用時以品牌 cobalt 高亮（選中語意色），未啟用為浮起層。
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.kSpaceXxs),
       child: Material(
         color: _isCtrlActive
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(4),
+            ? AppColors.kColorPrimary
+            : AppColors.kColorSurfaceRaised,
+        borderRadius: BorderRadius.circular(AppSpacing.kRadiusSm),
         child: InkWell(
           key: const Key('toolbar_ctrl'),
           onTap: _toggleCtrl,
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppSpacing.kRadiusSm),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: UiConstants.toolbarButtonPaddingH,
@@ -92,9 +106,9 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
               'Ctrl',
               style: TextStyle(
                 color: _isCtrlActive
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
+                    ? AppColors.kColorBg
+                    : AppColors.kColorInk,
+                fontWeight: AppTypography.kFontLabelWeight,
               ),
             ),
           ),
@@ -105,14 +119,20 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
 
   Widget _buildKeyButton(String label, VoidCallback onTap) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.kSpaceXxs),
       child: InkWell(
         key: Key('toolbar_$label'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppSpacing.kRadiusSm),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(label),
+          padding: const EdgeInsets.symmetric(
+            horizontal: UiConstants.toolbarButtonPaddingH,
+            vertical: UiConstants.toolbarButtonPaddingV,
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.kColorInk),
+          ),
         ),
       ),
     );
