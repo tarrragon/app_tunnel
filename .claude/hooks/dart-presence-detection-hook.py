@@ -65,6 +65,11 @@ SKIP_PATTERNS = [
     r"ui_colors\.dart$",
     r"ui_spacing\.dart$",
     r"ui_constants\.dart$",
+    # 013/014 ANA 選定的集中化 sink 檔（app_*/terminal_* 命名）。
+    # 常數定義本體（018/020 將寫入）不應被誤攔，否則 bootstrap 自身被阻塞。
+    r"app_spacing\.dart$",
+    r"app_typography\.dart$",
+    r"terminal_constants\.dart$",
 ]
 
 # Override marker：命中行自身或前一行存在即豁免
@@ -99,6 +104,8 @@ _STRING_EXCLUDE_CONTEXT = re.compile(
         \bprint\b             |
         \bassert\b            |
         \bthrow\s+\w*Exception|   # 例外訊息屬開發者面
+        \bArgumentError\b     |   # 參數校驗錯誤訊息屬開發者面（017 觀察過度偵測）
+        \btoString\s*\(       |   # toString 內字串屬開發者除錯輸出，非 user-facing（017 觀察）
         \bAppLogger\b         |
         \bKey\s*\(            |   # ValueKey / Key 字面
         \bByName\b

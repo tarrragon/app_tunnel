@@ -59,6 +59,14 @@ def test_does_not_skip_normal_feature_file():
     assert not should_skip_file("app/lib/features/auth/login_screen.dart")
 
 
+def test_skip_sink_definition_files():
+    # 013/014 ANA 選定的集中化 sink 檔（app_*/terminal_* 命名）。
+    # 常數定義本體不應被誤攔，否則 018/020 bootstrap 自身被阻塞。
+    assert should_skip_file("app/lib/theme/app_spacing.dart")
+    assert should_skip_file("app/lib/theme/app_typography.dart")
+    assert should_skip_file("app/lib/features/terminal/terminal_constants.dart")
+
+
 # ---------- 類別 1：硬編碼字串 ----------
 
 def test_detect_cjk_user_facing_string():
@@ -106,6 +114,20 @@ def test_comment_string_excluded():
 def test_single_token_string_not_user_facing():
     # 'utf-8' 類單字 token 不應被當 user-facing
     content = "encoding: 'utf-8'"
+    v = detect_violations(content)
+    assert not any(x["category"] == "i18n" for x in v)
+
+
+def test_string_in_argumenterror_excluded():
+    # ArgumentError 訊息屬開發者面，非 user-facing（017 觀察過度偵測）
+    content = 'throw ArgumentError("port must be a positive integer")'
+    v = detect_violations(content)
+    assert not any(x["category"] == "i18n" for x in v)
+
+
+def test_string_in_tostring_excluded():
+    # toString 內字串屬開發者除錯輸出，非 user-facing（017 觀察過度偵測）
+    content = 'String toString() => "AuthState(status: $status)";'
     v = detect_violations(content)
     assert not any(x["category"] == "i18n" for x in v)
 
