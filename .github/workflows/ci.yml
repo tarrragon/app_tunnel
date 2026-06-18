@@ -24,3 +24,22 @@ jobs:
         run: |
           GOOS=darwin GOARCH=arm64 go build ./...
           GOOS=linux GOARCH=amd64 go build ./...
+
+  app:
+    name: app (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.10"
+          channel: stable
+      - name: pub get
+        run: flutter pub get
+      - name: analyze
+        run: flutter analyze
+      - name: test
+        run: flutter test
