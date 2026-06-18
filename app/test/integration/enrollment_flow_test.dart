@@ -1,6 +1,6 @@
-/// 需求：[UC-01] 配對流程端對端整合測試
-/// 驗證：QR payload 解析為 Credential -> 儲存至 repository
-/// 約束：使用 mock server（InMemoryCredentialRepository），無需真實後端。
+// 需求：[UC-01] 配對流程端對端整合測試
+// 驗證：QR payload 解析為 Credential -> 儲存至 repository
+// 約束：使用 mock server（InMemoryCredentialRepository），無需真實後端。
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

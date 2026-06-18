@@ -1,7 +1,7 @@
-/// Shared fakes and helpers for integration tests.
-///
-/// Requirement: [1.0.0-W7-002] Reusable mock infrastructure for
-/// enrollment, connection, and credential rotation integration tests.
+// Shared fakes and helpers for integration tests.
+//
+// Requirement: [1.0.0-W7-002] Reusable mock infrastructure for
+// enrollment, connection, and credential rotation integration tests.
 import 'dart:async';
 import 'dart:convert';
 

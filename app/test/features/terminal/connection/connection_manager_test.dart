@@ -48,7 +48,6 @@ class _FakeWebSocketChannel extends Fake implements WebSocketChannel {
 
   final bool shouldTimeout;
   final _streamController = StreamController<dynamic>.broadcast();
-  final _sinkController = StreamController<dynamic>();
   bool closed = false;
 
   @override

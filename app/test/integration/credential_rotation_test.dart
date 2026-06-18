@@ -1,7 +1,6 @@
-/// 需求：[UC-03] 帳密輪替端對端整合測試
-/// 驗證：舊憑證覆寫 -> 新憑證生效 -> 使用新憑證連線
-/// 約束：使用 mock server，驗證 repository 覆寫行為與 ConnectionManager 讀取一致。
-import 'dart:async';
+// 需求：[UC-03] 帳密輪替端對端整合測試
+// 驗證：舊憑證覆寫 -> 新憑證生效 -> 使用新憑證連線
+// 約束：使用 mock server，驗證 repository 覆寫行為與 ConnectionManager 讀取一致。
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';

@@ -1,8 +1,6 @@
-/// 需求：[UC-02] 連線流程端對端整合測試
-/// 驗證：生物辨識 -> 載入憑證 -> 建立 WS 連線 -> 雙向資料交換
-/// 約束：使用 FakeWebSocketChannel，無需真實 WS server。
-import 'dart:async';
-
+// 需求：[UC-02] 連線流程端對端整合測試
+// 驗證：生物辨識 -> 載入憑證 -> 建立 WS 連線 -> 雙向資料交換
+// 約束：使用 FakeWebSocketChannel，無需真實 WS server。
 import 'package:flutter_test/flutter_test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 

@@ -1,5 +1,4 @@
 import 'package:app_tunnel/features/terminal/renderer/ansi_parser.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
