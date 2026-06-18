@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:app_tunnel/core/constants/terminal_constants.dart';
 import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
+import 'package:app_tunnel/core/theme/app_spacing.dart';
+import 'package:app_tunnel/core/theme/app_typography.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_error.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_manager.dart';
@@ -241,6 +243,7 @@ class TerminalScreenState extends State<TerminalScreen>
   Widget _buildTerminalView() {
     return Column(
       children: [
+        _buildStatusBar(),
         Expanded(
           child: TerminalRenderer(
             outputStream: _decodedOutputController.stream,
@@ -248,6 +251,47 @@ class TerminalScreenState extends State<TerminalScreen>
         ),
         TerminalToolbar(onKeyInput: _onKeyInput),
       ],
+    );
+  }
+
+  /// 需求：[UC-02][1.2.0-W1-025] 終端機畫面頂部狀態列（外框/狀態列）。
+  /// 以 surface token 作第二 neutral 層、底部 token 邊框與終端輸出區分隔，
+  /// 顯示終端標題與連線狀態語意色點，保留下方輸出區擬真渲染不動。
+  Widget _buildStatusBar() {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.kColorSurface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.kColorBorder),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.kSpaceMd,
+        vertical: AppSpacing.kSpaceSm,
+      ),
+      child: Row(
+        children: [
+          const _StatusDot(color: AppColors.kColorStatusConnected),
+          const SizedBox(width: AppSpacing.kSpaceSm),
+          Text(
+            l10n.terminalTitle,
+            style: const TextStyle(
+              color: AppColors.kColorInk,
+              fontSize: AppTypography.kFontLabelSize,
+              fontWeight: AppTypography.kFontTitleWeight,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            l10n.terminalStatusConnected,
+            style: const TextStyle(
+              color: AppColors.kColorInkMuted,
+              fontSize: AppTypography.kFontLabelSize,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -330,5 +374,24 @@ class TerminalScreenState extends State<TerminalScreen>
       case ConnectionErrorType.unknown:
         return l10n.terminalErrorGeneric;
     }
+  }
+}
+
+/// 狀態列的連線狀態指示點（語意色圓點）。
+class _StatusDot extends StatelessWidget {
+  const _StatusDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: AppSpacing.kSpaceSm,
+      height: AppSpacing.kSpaceSm,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
   }
 }
