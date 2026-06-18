@@ -43,3 +43,7 @@ versions:
         description: "enroll.go logger 不一致（log vs slog）"
         priority: P3
         target_version: null
+      - id: TD-P3-004
+        description: "version-release CLI 誤判 monorepo 為 chrome-ext + 期待的 v1.0.0-main.md worklog 結構不存在，無法用於本專案自動發版（v1.1.0 手動發布）。修法：補 .claude/.version-release.yaml project_type / version_source，或回饋上游修 CLI monorepo 偵測。見 PC-TUNL-001"
+        priority: P3
+        target_version: null

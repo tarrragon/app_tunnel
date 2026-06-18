@@ -162,4 +162,18 @@ tarrragon/claude(框架散佈,其他專案受惠)
 
 ---
 
+## 9. 交付守門（Definition of Done）
+
+本專案為 monorepo（`app/` Flutter + `server/` Go）。除各 ticket 自身 acceptance 外，下列為專案級交付守門，任一不滿足即非「完成」：
+
+| DoD | 要求 | 依據 |
+|-----|------|------|
+| CI 對稱守門 | 每個可獨立編譯的子端（app / server）都必須有對應 CI job（analyze/vet + test）。新增子端或新可編譯產物時，同版本必須補上 CI job，缺則建 ticket 追蹤，不可只靠本機綠燈 | `PC-TUNL-001` |
+| 跨環境可重現 | 版本約束（SDK / 語言版本）不可只在開發者本機驗證；以 CI 獨立環境跑 analyze + test 為最低限度的 reproducibility gate | `PC-TUNL-001`、quality-baseline 規則 1 |
+| CI scope 標注 | CI 設定檔若在某張單端 ticket 內誕生/修改，須於 ticket 標注「本 CI 覆蓋哪些端、哪端待補」，避免缺口無人認領 | `PC-TUNL-001` |
+
+> 背景：v1.0.0 開發期 Flutter 端只有本機 `flutter test` 綠燈、未進 CI，且 scaffold 自帶的 Dart SDK 約束在開發者本機恰好相符，遮蔽了「換環境無法編譯」的事實，直到 v1.1.0 才發現並補正。
+
+---
+
 *專案入口文件 - 詳細規則請參考 .claude/rules/ 目錄*
