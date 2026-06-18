@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
@@ -46,7 +47,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan QR Code')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).enrollmentScanTitle)),
       body: Stack(
         children: [
           MobileScanner(
@@ -102,7 +103,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         actions: [
           TextButton(
             onPressed: () => setState(() => _errorMessage = null),
-            child: const Text('Dismiss'),
+            child: Text(AppLocalizations.of(context).commonDismiss),
           ),
         ],
       ),

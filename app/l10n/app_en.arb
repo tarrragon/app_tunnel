@@ -1,0 +1,91 @@
+{
+  "@@locale": "en",
+  "appTitle": "App Tunnel",
+  "@appTitle": {
+    "description": "Application title shown in OS task switcher (main.dart)"
+  },
+  "homeAppBarTitle": "App Tunnel",
+  "@homeAppBarTitle": {
+    "description": "Home screen app bar title"
+  },
+  "homeHeadline": "App Tunnel - Remote Terminal",
+  "@homeHeadline": {
+    "description": "Home screen headline text"
+  },
+  "homeConnectButton": "Connect Terminal",
+  "@homeConnectButton": {
+    "description": "Home screen button to open the terminal"
+  },
+  "enrollmentScanTitle": "Scan QR Code",
+  "@enrollmentScanTitle": {
+    "description": "QR scanner screen app bar title"
+  },
+  "commonDismiss": "Dismiss",
+  "@commonDismiss": {
+    "description": "Common dismiss action label"
+  },
+  "enrollmentOverwriteTitle": "Overwrite Credential",
+  "@enrollmentOverwriteTitle": {
+    "description": "Overwrite confirmation dialog title"
+  },
+  "enrollmentOverwriteMessage": "A credential already exists. Do you want to replace it?",
+  "@enrollmentOverwriteMessage": {
+    "description": "Overwrite confirmation dialog body"
+  },
+  "commonCancel": "Cancel",
+  "@commonCancel": {
+    "description": "Common cancel action label"
+  },
+  "enrollmentReplaceButton": "Replace",
+  "@enrollmentReplaceButton": {
+    "description": "Overwrite confirmation replace action label"
+  },
+  "enrollmentSaveSuccess": "Credential saved successfully",
+  "@enrollmentSaveSuccess": {
+    "description": "Snackbar shown after credential is saved"
+  },
+  "enrollmentTitle": "Device Enrollment",
+  "@enrollmentTitle": {
+    "description": "Enrollment screen app bar title"
+  },
+  "enrollmentInstruction": "Scan the QR code from your server to pair this device.",
+  "@enrollmentInstruction": {
+    "description": "Enrollment screen instruction text"
+  },
+  "enrollmentScanButton": "Scan QR Code",
+  "@enrollmentScanButton": {
+    "description": "Enrollment screen scan action button label"
+  },
+  "authBiometricReason": "Authenticate to access remote terminal",
+  "@authBiometricReason": {
+    "description": "Reason shown in the biometric authentication prompt"
+  },
+  "terminalConnecting": "Connecting...",
+  "@terminalConnecting": {
+    "description": "Terminal connecting status text"
+  },
+  "terminalDisconnected": "Disconnected",
+  "@terminalDisconnected": {
+    "description": "Terminal disconnected status text"
+  },
+  "terminalReconnect": "Reconnect",
+  "@terminalReconnect": {
+    "description": "Terminal reconnect button label"
+  },
+  "terminalErrorGeneric": "Connection error",
+  "@terminalErrorGeneric": {
+    "description": "Generic terminal connection error message"
+  },
+  "terminalErrorAuth": "Authentication failed",
+  "@terminalErrorAuth": {
+    "description": "Terminal authentication failure message"
+  },
+  "terminalErrorTimeout": "Connection timed out",
+  "@terminalErrorTimeout": {
+    "description": "Terminal connection timeout message"
+  },
+  "terminalErrorNetwork": "Network unreachable",
+  "@terminalErrorNetwork": {
+    "description": "Terminal network unreachable message"
+  }
+}

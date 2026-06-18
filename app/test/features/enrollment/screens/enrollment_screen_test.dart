@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
 import 'package:app_tunnel/features/enrollment/screens/enrollment_screen.dart';
@@ -36,6 +37,8 @@ void main() {
 
   Widget buildTestApp() {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: EnrollmentScreen(credentialRepository: mockRepo),
     );
   }

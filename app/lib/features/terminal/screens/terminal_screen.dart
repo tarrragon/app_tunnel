@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_error.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_manager.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_state.dart'
@@ -202,15 +203,15 @@ class TerminalScreenState extends State<TerminalScreen>
   }
 
   Widget _buildConnectingView() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: Colors.white),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: Colors.white),
+          const SizedBox(height: 16),
           Text(
-            'Connecting...',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            AppLocalizations.of(context).terminalConnecting,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ],
       ),
@@ -231,22 +232,23 @@ class TerminalScreenState extends State<TerminalScreen>
   }
 
   Widget _buildDisconnectedView() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.link_off, color: Colors.white54, size: 48),
           const SizedBox(height: 16),
-          const Text(
-            'Disconnected',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+          Text(
+            l10n.terminalDisconnected,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             key: const Key('reconnect_button'),
             onPressed: _reconnect,
             icon: const Icon(Icons.refresh),
-            label: const Text('Reconnect'),
+            label: Text(l10n.terminalReconnect),
           ),
         ],
       ),
@@ -254,8 +256,9 @@ class TerminalScreenState extends State<TerminalScreen>
   }
 
   Widget _buildErrorView() {
+    final l10n = AppLocalizations.of(context);
     final error = widget.connectionManager.lastError;
-    final message = _errorDisplayMessage(error);
+    final message = _errorDisplayMessage(l10n, error);
 
     return Center(
       child: Column(
@@ -273,7 +276,7 @@ class TerminalScreenState extends State<TerminalScreen>
             key: const Key('reconnect_button'),
             onPressed: _reconnect,
             icon: const Icon(Icons.refresh),
-            label: const Text('Reconnect'),
+            label: Text(l10n.terminalReconnect),
           ),
         ],
       ),
@@ -281,17 +284,17 @@ class TerminalScreenState extends State<TerminalScreen>
   }
 
   /// 需求：[UC-02] 依錯誤類型顯示使用者可理解的訊息
-  String _errorDisplayMessage(ConnectionError? error) {
-    if (error == null) return 'Connection error';
+  String _errorDisplayMessage(AppLocalizations l10n, ConnectionError? error) {
+    if (error == null) return l10n.terminalErrorGeneric;
     switch (error.type) {
       case ConnectionErrorType.authenticationFailed:
-        return 'Authentication failed';
+        return l10n.terminalErrorAuth;
       case ConnectionErrorType.timeout:
-        return 'Connection timed out';
+        return l10n.terminalErrorTimeout;
       case ConnectionErrorType.networkOffline:
-        return 'Network unreachable';
+        return l10n.terminalErrorNetwork;
       case ConnectionErrorType.unknown:
-        return 'Connection error';
+        return l10n.terminalErrorGeneric;
     }
   }
 }
