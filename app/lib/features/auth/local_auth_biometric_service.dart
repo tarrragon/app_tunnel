@@ -21,6 +21,10 @@ class LocalAuthBiometricService implements BiometricService {
   Future<bool> authenticate() async {
     final available = await isAvailable();
     if (!available) return false;
+    // i18n 例外（1.2.0-W1-019）：此 OS 生物辨識提示文字位於不持有
+    // BuildContext 的服務層，呼叫鏈（ConnectionManager.connect）亦無 context，
+    // 無法直接引用 AppLocalizations。對應 ARB key authBiometricReason 已預留，
+    // 待 1.2.0-W1-027 將 context 注入認證鏈後遷移。
     return _localAuth.authenticate(
       localizedReason: 'Authenticate to access remote terminal',
       options: const AuthenticationOptions(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/auth/biometric_service.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -117,6 +118,8 @@ void main() {
 
   Widget buildTestApp() {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TerminalScreen(
         connectionManager: connectionManager,
         protocol: protocol,

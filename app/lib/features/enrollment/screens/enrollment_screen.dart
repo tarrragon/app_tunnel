@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
 import 'package:app_tunnel/features/enrollment/qr_scanner_screen.dart';
@@ -70,21 +71,20 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
 
   /// Requirement: [UC-03] Overwrite confirmation when credential exists.
   Future<bool?> _showOverwriteDialog() {
+    final l10n = AppLocalizations.of(context);
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Overwrite Credential'),
-        content: const Text(
-          'A credential already exists. Do you want to replace it?',
-        ),
+        title: Text(l10n.enrollmentOverwriteTitle),
+        content: Text(l10n.enrollmentOverwriteMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Replace'),
+            child: Text(l10n.enrollmentReplaceButton),
           ),
         ],
       ),
@@ -93,14 +93,14 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
 
   void _showSuccessSnackBar() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Credential saved successfully')),
+      SnackBar(content: Text(AppLocalizations.of(context).enrollmentSaveSuccess)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Device Enrollment')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).enrollmentTitle)),
       body: Center(
         child: _isProcessing
             ? const CircularProgressIndicator()
@@ -110,17 +110,18 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
   }
 
   Widget _buildContent() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.qr_code_scanner, size: 96),
         const SizedBox(height: 24),
-        const Text('Scan the QR code from your server to pair this device.'),
+        Text(l10n.enrollmentInstruction),
         const SizedBox(height: 24),
         ElevatedButton.icon(
           onPressed: _startEnrollment,
           icon: const Icon(Icons.camera_alt),
-          label: const Text('Scan QR Code'),
+          label: Text(l10n.enrollmentScanButton),
         ),
         if (_statusMessage != null) ...[
           const SizedBox(height: 16),
