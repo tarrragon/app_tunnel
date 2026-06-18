@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:app_tunnel/l10n/app_localizations.dart';
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
@@ -64,13 +65,15 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   /// Semi-transparent overlay with a clear center scanning area.
   Widget _buildScanOverlay() {
     return ColorFiltered(
-      colorFilter: ColorFilter.mode(
-        Colors.black.withAlpha(128),
+      colorFilter: const ColorFilter.mode(
+        AppColors.kColorScrim,
         BlendMode.srcOut,
       ),
       child: Stack(
         children: [
           Container(
+            // 非 UI 語意色：dstOut 遮罩僅取其不透明度挖空中央掃描區，
+            // RGB 值不影響呈現，故維持框架 Colors.black 不納入主題 token。
             decoration: const BoxDecoration(
               color: Colors.black,
               backgroundBlendMode: BlendMode.dstOut,

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:app_tunnel/core/constants/terminal_constants.dart';
 import 'package:app_tunnel/core/constants/ui_constants.dart';
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_error.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_manager.dart';
@@ -199,7 +200,7 @@ class TerminalScreenState extends State<TerminalScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      backgroundColor: AppColors.kAnsiDefaultBackground,
       body: SafeArea(child: _buildBody()),
     );
   }
@@ -223,12 +224,12 @@ class TerminalScreenState extends State<TerminalScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: Colors.white),
+          const CircularProgressIndicator(color: AppColors.kColorInk),
           const SizedBox(height: UiConstants.itemSpacing),
           Text(
             AppLocalizations.of(context).terminalConnecting,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.kColorInkMuted,
               fontSize: UiConstants.statusFontSize,
             ),
           ),
@@ -258,14 +259,14 @@ class TerminalScreenState extends State<TerminalScreen>
         children: [
           const Icon(
             Icons.link_off,
-            color: Colors.white54,
+            color: AppColors.kColorInkFaint,
             size: UiConstants.statusIconSize,
           ),
           const SizedBox(height: UiConstants.itemSpacing),
           Text(
             l10n.terminalDisconnected,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.kColorInkMuted,
               fontSize: UiConstants.statusFontSize,
             ),
           ),
@@ -292,14 +293,14 @@ class TerminalScreenState extends State<TerminalScreen>
         children: [
           const Icon(
             Icons.error_outline,
-            color: Colors.redAccent,
+            color: AppColors.kColorStatusError,
             size: UiConstants.statusIconSize,
           ),
           const SizedBox(height: UiConstants.itemSpacing),
           Text(
             message,
             style: const TextStyle(
-              color: Colors.white70,
+              color: AppColors.kColorInkMuted,
               fontSize: UiConstants.statusFontSize,
             ),
             textAlign: TextAlign.center,
