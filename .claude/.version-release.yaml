@@ -12,11 +12,23 @@
 # 未列出的欄位（versions / sync_rules / detection / preflight_checks）
 # 由 DEFAULT_VERSION_RELEASE_CONFIG 提供預設值。
 
+# 專案類型：monorepo（app/ Flutter + server/ Go），但發版以單一版本號管理
+# 整個產品（tag v{version}），版本源取 app/pubspec.yaml（server 為 tag-driven）。
+# 故 project_type 設 flutter、版本源明指 app/pubspec.yaml，而非 monorepo 子專案模型。
+project_type: flutter
+
+# 版本源：app/pubspec.yaml 為產品版本 SoT（與 git tag v{version} 一致）
+version_source:
+  primary: app/pubspec.yaml
+  parser: yaml
+
 # 發布工作流：trunk = all-on-main，跳過 feature-branch merge 與分支清理
 release_workflow: trunk
 
 # tag 命名：plain v{version}（無 -final 後綴）
 tag_format: "v{version}"
 
-# worklog 巢狀路徑範本（支援 {version} / {major_minor} / {major} 佔位符）
-worklog_path_pattern: "docs/work-logs/v{version}"
+# worklog 巢狀路徑範本（與 ticket CLI 的 v{major}/v{major_minor}/v{version} 一致）
+# 註：先前此值為扁平 "docs/work-logs/v{version}"，與 ticket CLI 的巢狀放置不符，
+# 導致 version-release preflight 找不到 worklog。改為巢狀對齊兩工具。
+worklog_path_pattern: "docs/work-logs/v{major}/v{major_minor}/v{version}"
