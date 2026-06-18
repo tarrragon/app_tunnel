@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-18
+
 ### Added
 - 根目錄一鍵啟動腳本 `bootstrap.sh`：自動檢查依賴 → 缺就安裝（ttyd/qrencode/Go）→ 編譯 proxy → 起服務，旗標與 `deploy/scripts/start.sh` 一致並原樣轉發（Tailscale 只檢查不自動處理，因 `tailscale up` 需互動式 SSO）
 - CI 新增 Flutter job（pub get + analyze + test），補上 Flutter 端編譯守門（原 CI 僅涵蓋 Go server）
