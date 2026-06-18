@@ -60,6 +60,14 @@
   "@authBiometricReason": {
     "description": "Reason shown in the biometric authentication prompt"
   },
+  "terminalTitle": "Terminal",
+  "@terminalTitle": {
+    "description": "Terminal screen status bar title label"
+  },
+  "terminalStatusConnected": "Connected",
+  "@terminalStatusConnected": {
+    "description": "Terminal status bar label when the session is connected"
+  },
   "terminalConnecting": "Connecting...",
   "@terminalConnecting": {
     "description": "Terminal connecting status text"

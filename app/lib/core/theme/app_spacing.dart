@@ -4,6 +4,9 @@
 
 /// 設計 Token 間距尺度（4px 基準）。
 abstract final class AppSpacing {
+  /// 最小間隙（按鍵之間的水平 gap）。
+  static const double kSpaceXxs = 2;
+
   /// icon 與文字間隙。
   static const double kSpaceXs = 4;
 
@@ -18,4 +21,7 @@ abstract final class AppSpacing {
 
   /// 大留白、置中內容上下緩衝。
   static const double kSpaceXl = 48;
+
+  /// 小圓角（按鍵/晶片）。
+  static const double kRadiusSm = 4;
 }

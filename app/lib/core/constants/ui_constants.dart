@@ -19,6 +19,9 @@ abstract final class UiConstants {
   /// 配對畫面 QR icon 尺寸。
   static const double enrollmentIconSize = 96.0;
 
+  /// QR 掃描框邊長（鏤空對焦區）。
+  static const double qrScanFrameSize = 250.0;
+
   /// 工具列按鍵水平內距。
   static const double toolbarButtonPaddingH = 12.0;
 
