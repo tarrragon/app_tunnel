@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:app_tunnel/core/constants/terminal_constants.dart';
+import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_error.dart';
 import 'package:app_tunnel/features/terminal/connection/connection_manager.dart';
@@ -153,13 +155,19 @@ class TerminalScreenState extends State<TerminalScreen>
     _sendResize(columns: columns, rows: rows);
   }
 
-  /// 以 monospace 8px 寬估算欄數（扣除 16px padding）。
+  /// 以 monospace 字元寬估算欄數（扣除水平 padding）。
   int _estimateColumns(double width) =>
-      ((width - 16) / 8).floor().clamp(20, 500);
+      ((width - TerminalConstants.horizontalPadding) /
+              TerminalConstants.charWidth)
+          .floor()
+          .clamp(TerminalConstants.minColumns, TerminalConstants.maxColumns);
 
-  /// 以 fontSize * 1.2 行高估算列數（扣除 toolbar 約 48px）。
+  /// 以行高估算列數（扣除 toolbar 高度）。
   int _estimateRows(double height) =>
-      ((height - 48) / 16.8).floor().clamp(5, 200);
+      ((height - TerminalConstants.toolbarHeight) /
+              TerminalConstants.lineHeight)
+          .floor()
+          .clamp(TerminalConstants.minRows, TerminalConstants.maxRows);
 
   void _sendResize({required int columns, required int rows}) {
     developer.log(
@@ -209,10 +217,13 @@ class TerminalScreenState extends State<TerminalScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           const CircularProgressIndicator(color: Colors.white),
-          const SizedBox(height: 16),
+          const SizedBox(height: UiConstants.itemSpacing),
           Text(
             AppLocalizations.of(context).terminalConnecting,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: UiConstants.statusFontSize,
+            ),
           ),
         ],
       ),
@@ -238,13 +249,20 @@ class TerminalScreenState extends State<TerminalScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.link_off, color: Colors.white54, size: 48),
-          const SizedBox(height: 16),
+          const Icon(
+            Icons.link_off,
+            color: Colors.white54,
+            size: UiConstants.statusIconSize,
+          ),
+          const SizedBox(height: UiConstants.itemSpacing),
           Text(
             l10n.terminalDisconnected,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: UiConstants.statusFontSize,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: UiConstants.sectionSpacing),
           PrimaryActionButton(
             key: const Key('reconnect_button'),
             onPressed: _reconnect,
@@ -265,14 +283,21 @@ class TerminalScreenState extends State<TerminalScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-          const SizedBox(height: 16),
+          const Icon(
+            Icons.error_outline,
+            color: Colors.redAccent,
+            size: UiConstants.statusIconSize,
+          ),
+          const SizedBox(height: UiConstants.itemSpacing),
           Text(
             message,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: UiConstants.statusFontSize,
+            ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: UiConstants.sectionSpacing),
           PrimaryActionButton(
             key: const Key('reconnect_button'),
             onPressed: _reconnect,

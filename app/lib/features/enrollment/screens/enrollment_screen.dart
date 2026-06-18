@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -115,17 +116,20 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.qr_code_scanner, size: 96),
-        const SizedBox(height: 24),
+        const Icon(
+          Icons.qr_code_scanner,
+          size: UiConstants.enrollmentIconSize,
+        ),
+        const SizedBox(height: UiConstants.sectionSpacing),
         Text(l10n.enrollmentInstruction),
-        const SizedBox(height: 24),
+        const SizedBox(height: UiConstants.sectionSpacing),
         PrimaryActionButton(
           onPressed: _startEnrollment,
           icon: Icons.camera_alt,
           label: l10n.enrollmentScanButton,
         ),
         if (_statusMessage != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: UiConstants.itemSpacing),
           Text(
             _statusMessage!,
             style: TextStyle(

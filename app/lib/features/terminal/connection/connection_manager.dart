@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'package:app_tunnel/core/constants/terminal_constants.dart';
 import 'package:app_tunnel/features/auth/biometric_service.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -21,7 +22,7 @@ class ConnectionManager {
     required CredentialRepository credentialRepository,
     required TerminalProtocol protocol,
     WebSocketChannelFactory? channelFactory,
-    Duration connectTimeout = const Duration(seconds: 10),
+    Duration connectTimeout = TerminalConstants.connectTimeout,
   })  : _biometricService = biometricService,
         _credentialRepository = credentialRepository,
         _protocol = protocol,
