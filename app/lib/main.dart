@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/core/router/app_router.dart';
+import 'package:app_tunnel/core/theme/app_theme.dart';
 import 'package:app_tunnel/features/auth/biometric_service.dart';
 import 'package:app_tunnel/features/auth/local_auth_biometric_service.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -50,10 +51,7 @@ class AppTunnelApp extends StatelessWidget {
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.dark(),
       routerConfig: _router,
     );
   }

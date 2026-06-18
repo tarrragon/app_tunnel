@@ -4,6 +4,7 @@ import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
 import 'package:app_tunnel/features/enrollment/qr_scanner_screen.dart';
+import 'package:app_tunnel/shared/widgets/primary_action_button.dart';
 
 /// Requirement: [UC-01] Full enrollment flow — scan QR, parse, save credential.
 /// Flow: tap scan → QrScannerScreen → parse credential → check existing → save → done.
@@ -118,10 +119,10 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
         const SizedBox(height: 24),
         Text(l10n.enrollmentInstruction),
         const SizedBox(height: 24),
-        ElevatedButton.icon(
+        PrimaryActionButton(
           onPressed: _startEnrollment,
-          icon: const Icon(Icons.camera_alt),
-          label: Text(l10n.enrollmentScanButton),
+          icon: Icons.camera_alt,
+          label: l10n.enrollmentScanButton,
         ),
         if (_statusMessage != null) ...[
           const SizedBox(height: 16),

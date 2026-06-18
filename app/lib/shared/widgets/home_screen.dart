@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:app_tunnel/l10n/app_localizations.dart';
+import 'package:app_tunnel/shared/widgets/primary_action_button.dart';
 
 /// Placeholder home screen for initial project scaffold.
 class HomeScreen extends StatelessWidget {
@@ -19,11 +20,11 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(l10n.homeHeadline),
             const SizedBox(height: 24),
-            FilledButton.icon(
+            PrimaryActionButton(
               key: const Key('connect_terminal_button'),
               onPressed: () => context.go('/terminal'),
-              icon: const Icon(Icons.terminal),
-              label: Text(l10n.homeConnectButton),
+              icon: Icons.terminal,
+              label: l10n.homeConnectButton,
             ),
           ],
         ),
