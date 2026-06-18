@@ -44,6 +44,10 @@ class TtydProtocol implements TerminalProtocol {
   @override
   String? decodeOutput(dynamic rawFrame) {
     if (rawFrame is String) {
+      if (rawFrame.isEmpty) return null;
+      if (rawFrame.codeUnitAt(0) == outputPrefix) {
+        return rawFrame.substring(1);
+      }
       return rawFrame;
     }
     if (rawFrame is List<int>) {

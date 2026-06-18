@@ -207,11 +207,12 @@ void main() {
         await tester.pumpWidget(buildTestApp());
         await tester.pumpAndSettle();
 
-        // 已 connected，送資料
+        // 已 connected，送資料（sendData 將 Uint8List 轉為 String text frame）
         final inputFrame = protocol.encodeInput('ls\n');
         connectionManager.sendData(inputFrame);
 
-        expect(fakeChannel._sinkItems, contains(inputFrame));
+        final expectedText = String.fromCharCodes(inputFrame);
+        expect(fakeChannel._sinkItems, contains(expectedText));
       },
     );
 
@@ -229,9 +230,9 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        // 驗證有 resize 訊框被送出（前綴 0x31 = '1'）
-        final resizeFrames = fakeChannel._sinkItems.whereType<Uint8List>().where(
-          (frame) => frame.isNotEmpty && frame[0] == TtydProtocol.resizePrefix,
+        // 驗證有 resize 訊框被送出（text frame 以 '1' 開頭）
+        final resizeFrames = fakeChannel._sinkItems.whereType<String>().where(
+          (frame) => frame.isNotEmpty && frame.codeUnitAt(0) == TtydProtocol.resizePrefix,
         );
         expect(resizeFrames, isNotEmpty);
       },

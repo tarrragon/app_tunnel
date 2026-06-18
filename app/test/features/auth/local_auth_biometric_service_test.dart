@@ -54,11 +54,11 @@ void main() {
       expect(await service.isAvailable(), isFalse);
     });
 
-    test('returns false when no biometrics enrolled', () async {
+    test('returns true when no biometrics enrolled but device supported', () async {
       service = LocalAuthBiometricService(
         localAuth: _FakeLocalAuth(biometrics: []),
       );
-      expect(await service.isAvailable(), isFalse);
+      expect(await service.isAvailable(), isTrue);
     });
   });
 

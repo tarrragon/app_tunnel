@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:app_tunnel/core/constants/terminal_constants.dart';
 import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
@@ -43,7 +45,7 @@ class TerminalScreen extends StatefulWidget {
 class TerminalScreenState extends State<TerminalScreen>
     with WidgetsBindingObserver {
   StreamSubscription<cs.ConnectionState>? _stateSubscription;
-  final _decodedOutputController = StreamController<String>.broadcast();
+  final _decodedOutputController = StreamController<String>();
   StreamSubscription<dynamic>? _outputSubscription;
   TerminalScreenUiState _screenState = TerminalScreenUiState.idle;
 
@@ -71,6 +73,8 @@ class TerminalScreenState extends State<TerminalScreen>
     _stateSubscription?.cancel();
     _outputSubscription?.cancel();
     _decodedOutputController.close();
+    _inputFocusNode.dispose();
+    _inputController.dispose();
     super.dispose();
   }
 
@@ -122,7 +126,11 @@ class TerminalScreenState extends State<TerminalScreen>
     _outputSubscription?.cancel();
     _outputSubscription =
         widget.connectionManager.outputStream.listen((rawFrame) {
+      // i18n-exempt: debug logging for output pipeline
+      developer.log('rawFrame type=${rawFrame.runtimeType}', name: 'Output');
       final decoded = widget.protocol.decodeOutput(rawFrame);
+      // i18n-exempt
+      developer.log('decoded=${decoded != null ? "${decoded.length}chars" : "null"}', name: 'Output');
       if (decoded != null) {
         _decodedOutputController.add(decoded);
       }
@@ -197,6 +205,19 @@ class TerminalScreenState extends State<TerminalScreen>
     widget.connectionManager.sendData(data);
   }
 
+  void _onTextInput(String value) {
+    // No-op: input is sent on submit, not per-character
+  }
+
+  void _submitInput(String value) {
+    if (value.isEmpty) return;
+    // i18n-exempt
+    developer.log('submitInput: "$value"', name: 'TerminalScreen');
+    _onKeyInput(widget.protocol.encodeInput('$value\n'));
+    _inputController.clear();
+    _inputFocusNode.requestFocus();
+  }
+
   // -- Build --
 
   @override
@@ -235,10 +256,15 @@ class TerminalScreenState extends State<TerminalScreen>
               fontSize: UiConstants.statusFontSize,
             ),
           ),
+          const SizedBox(height: UiConstants.sectionSpacing),
+          _buildBackButton(context),
         ],
       ),
     );
   }
+
+  final _inputFocusNode = FocusNode();
+  final _inputController = TextEditingController();
 
   Widget _buildTerminalView() {
     return Column(
@@ -247,6 +273,44 @@ class TerminalScreenState extends State<TerminalScreen>
         Expanded(
           child: TerminalRenderer(
             outputStream: _decodedOutputController.stream,
+          ),
+        ),
+        Container(
+          color: AppColors.kColorSurface,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.kSpaceSm,
+            vertical: AppSpacing.kSpaceXs,
+          ),
+          child: TextField(
+            focusNode: _inputFocusNode,
+            controller: _inputController,
+            autofocus: true,
+            keyboardType: TextInputType.visiblePassword,
+            enableSuggestions: false,
+            autocorrect: false,
+            enableIMEPersonalizedLearning: false,
+            onChanged: _onTextInput,
+            onSubmitted: _submitInput,
+            textInputAction: TextInputAction.send,
+            style: const TextStyle(
+              color: AppColors.kColorInk,
+              fontSize: AppTypography.kFontBodySize,
+              fontFamily: 'monospace', // i18n-exempt
+            ),
+            cursorColor: AppColors.kColorPrimary,
+            decoration: InputDecoration(
+              hintText: 'Type here...', // i18n-exempt
+              hintStyle: const TextStyle(color: AppColors.kColorInkFaint),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.kSpaceXs),
+                borderSide: const BorderSide(color: AppColors.kColorBorder),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.kSpaceSm,
+                vertical: AppSpacing.kSpaceXs,
+              ),
+              isDense: true,
+            ),
           ),
         ),
         TerminalToolbar(onKeyInput: _onKeyInput),
@@ -321,6 +385,8 @@ class TerminalScreenState extends State<TerminalScreen>
             icon: Icons.refresh,
             label: l10n.terminalReconnect,
           ),
+          const SizedBox(height: UiConstants.itemSpacing),
+          _buildBackButton(context),
         ],
       ),
     );
@@ -356,7 +422,20 @@ class TerminalScreenState extends State<TerminalScreen>
             icon: Icons.refresh,
             label: l10n.terminalReconnect,
           ),
+          const SizedBox(height: UiConstants.itemSpacing),
+          _buildBackButton(context),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBackButton(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () => context.go('/'),
+      icon: const Icon(Icons.arrow_back, color: AppColors.kColorInkMuted),
+      label: Text(
+        'Back', // i18n-exempt
+        style: const TextStyle(color: AppColors.kColorInkMuted),
       ),
     );
   }

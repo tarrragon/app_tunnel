@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -56,9 +59,14 @@ class ConnectionManager {
   Stream<dynamic> get outputStream => _outputController.stream;
 
   /// 需求：[UC-02] 發送資料到 WS（鍵盤輸入 / resize 訊框）。
+  /// ttyd tty 協議期望 text WebSocket frame，非 binary frame。
   void sendData(dynamic data) {
     if (_state != ConnectionState.connected || _channel == null) return;
-    _channel!.sink.add(data);
+    if (data is Uint8List) {
+      _channel!.sink.add(String.fromCharCodes(data));
+    } else {
+      _channel!.sink.add(data);
+    }
   }
 
   /// 需求：[UC-02] 主場景 — 建立連線
@@ -74,11 +82,17 @@ class ConnectionManager {
     _transitionTo(ConnectionState.connecting);
 
     try {
+      developer.log('Step 1: biometric auth...', name: 'ConnectionManager'); // i18n-exempt
       await _authenticateWithBiometrics(biometricReason);
+      developer.log('Step 2: loading credential...', name: 'ConnectionManager'); // i18n-exempt
       final credential = await _loadCredential();
+      // i18n-exempt
+      developer.log('Step 3: connecting WS to ${credential.endpoint}...', name: 'ConnectionManager');
       await _establishWebSocket(credential);
       _transitionTo(ConnectionState.connected);
     } on ConnectionError catch (error) {
+      // i18n-exempt
+      developer.log('Connect failed: ${error.type} - ${error.message}', name: 'ConnectionManager', error: error.cause);
       _lastError = error;
       _transitionTo(ConnectionState.error);
     }
@@ -141,9 +155,10 @@ class ConnectionManager {
 
     try {
       _channel = _channelFactory(uri, headers);
-      // 等待 WS ready 事件或 timeout
-      await _channel!.ready.timeout(_connectTimeout);
+      // 先訂閱 stream 再等 ready，避免 ready 內部消耗 stream 事件
       _listenForDisconnection();
+      await _channel!.ready.timeout(_connectTimeout);
+      _sendAuthTokenIfNeeded(credential);
     } on TimeoutException {
       await _closeChannel();
       throw ConnectionError(
@@ -160,11 +175,17 @@ class ConnectionManager {
     }
   }
 
+  Stream<dynamic>? _broadcastStream;
+
   /// 監聽 WS 斷線事件。
   void _listenForDisconnection() {
     _channelSubscription?.cancel();
-    _channelSubscription = _channel?.stream.listen(
-      _outputController.add,
+    _broadcastStream = _channel?.stream.asBroadcastStream();
+    _channelSubscription = _broadcastStream?.listen(
+      (data) {
+        developer.log('WS recv: type=${data.runtimeType}', name: 'WS'); // i18n-exempt
+        _outputController.add(data);
+      },
       onDone: () {
         if (_state == ConnectionState.connected) {
           _transitionTo(ConnectionState.disconnected);
@@ -184,6 +205,16 @@ class ConnectionManager {
         _transitionTo(ConnectionState.error);
       },
     );
+  }
+
+  void _sendAuthTokenIfNeeded(Credential credential) {
+    final token = base64Encode(
+      utf8.encode('${credential.ttydUser}:${credential.ttydPass}'),
+    );
+    final frame = _protocol.buildAuthTokenFrame(authToken: token);
+    if (frame != null) {
+      _channel!.sink.add(frame);
+    }
   }
 
   Uri _parseEndpointUri(Credential credential) {

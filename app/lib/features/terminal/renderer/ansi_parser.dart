@@ -75,18 +75,33 @@ class AnsiParser {
   /// 需求：[1.2.0-W1-023] 套用 014 重配常數（bright 明度恆高於對應 normal）。
   static const List<Color> brightColors = AppColors.kAnsiBright;
 
-  /// ESC[ 序列的正規表達式。
+  /// CSI 序列（ESC[...X），不含 private mode（?前綴）。
   static final RegExp _escapePattern = RegExp(r'\x1B\[([0-9;]*)([A-Za-z])');
+
+  /// OSC 序列（ESC]...BEL 或 ESC]...ST）— 終端標題、目錄提示等，靜默忽略。
+  static final RegExp _oscPattern = RegExp(r'\x1B\].*?(?:\x07|\x1B\\)');
+
+  /// CSI private mode 序列（ESC[?...h/l 等）— 括號貼上、游標隱藏等，靜默忽略。
+  static final RegExp _csiPrivatePattern = RegExp(r'\x1B\[\?[0-9;]*[A-Za-z]');
+
+  /// 其他 escape 序列（ESC(B 字元集指定、ESC= 等），靜默忽略。
+  static final RegExp _otherEscPattern = RegExp(r'\x1B[()#][A-Za-z0-9]|\x1B[=>]');
 
   /// 解析含 ANSI escape 的原始文字為 token 串列。
   List<AnsiToken> parse(String input) {
+    // Strip non-renderable escape sequences before CSI parsing
+    final cleaned = input
+        .replaceAll(_oscPattern, '')
+        .replaceAll(_csiPrivatePattern, '')
+        .replaceAll(_otherEscPattern, '');
+
     final tokens = <AnsiToken>[];
     var lastEnd = 0;
 
-    for (final match in _escapePattern.allMatches(input)) {
+    for (final match in _escapePattern.allMatches(cleaned)) {
       // 收集 escape 前的純文字
       if (match.start > lastEnd) {
-        final text = input.substring(lastEnd, match.start);
+        final text = cleaned.substring(lastEnd, match.start);
         if (text.isNotEmpty) {
           tokens.add(TextToken(_buildSegment(text)));
         }
@@ -100,8 +115,8 @@ class AnsiParser {
     }
 
     // 收集最後一段純文字
-    if (lastEnd < input.length) {
-      final text = input.substring(lastEnd);
+    if (lastEnd < cleaned.length) {
+      final text = cleaned.substring(lastEnd);
       if (text.isNotEmpty) {
         tokens.add(TextToken(_buildSegment(text)));
       }

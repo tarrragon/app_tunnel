@@ -11,10 +11,7 @@ class LocalAuthBiometricService implements BiometricService {
 
   @override
   Future<bool> isAvailable() async {
-    final isDeviceSupported = await _localAuth.isDeviceSupported();
-    if (!isDeviceSupported) return false;
-    final biometrics = await _localAuth.getAvailableBiometrics();
-    return biometrics.isNotEmpty;
+    return _localAuth.isDeviceSupported();
   }
 
   @override
@@ -27,7 +24,7 @@ class LocalAuthBiometricService implements BiometricService {
       localizedReason: localizedReason,
       options: const AuthenticationOptions(
         stickyAuth: true,
-        biometricOnly: true,
+        biometricOnly: false,
       ),
     );
   }

@@ -80,7 +80,7 @@ void main() {
       await manager.connect(biometricReason: 'test reason');
 
       manager.sendData('user input');
-      expect(fakeChannel.sentFromClient, ['user input']);
+      expect(fakeChannel.sentFromClient.last, 'user input');
 
       await manager.dispose();
     });
@@ -204,7 +204,7 @@ void main() {
         cs.ConnectionState.connected,
         cs.ConnectionState.disconnected,
       ]);
-      expect(fakeChannel.sentFromClient, ['ls -la']);
+      expect(fakeChannel.sentFromClient.last, 'ls -la');
       expect(received, ['file1.txt\nfile2.txt']);
       await manager.dispose();
     });

@@ -35,6 +35,8 @@ class HomeScreen extends StatelessWidget {
               _buildHeadline(l10n.homeHeadline),
               const SizedBox(height: AppSpacing.kSpaceXl),
               _buildConnectButton(context, l10n.homeConnectButton),
+              const SizedBox(height: AppSpacing.kSpaceMd),
+              _buildEnrollButton(context),
             ],
           ),
         ),
@@ -70,6 +72,19 @@ class HomeScreen extends StatelessWidget {
         fontSize: AppTypography.kFontBodySize,
         fontWeight: AppTypography.kFontBodyWeight,
         height: AppTypography.kLineHeightUi,
+      ),
+    );
+  }
+
+  /// 配對入口：次要樣式，導航至 enrollment 掃描 QR。
+  Widget _buildEnrollButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        key: const Key('enroll_button'),
+        onPressed: () => context.push('/enrollment'),
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text('Enroll Device'), // i18n-exempt
       ),
     );
   }
