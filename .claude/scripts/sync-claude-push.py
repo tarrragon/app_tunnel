@@ -1003,7 +1003,10 @@ def check_no_change_early_exit(
 
 
 def clean_stale_files(
-    temp_dir: Path, reference_dir: Path, preserve: set[str] | None = None
+    temp_dir: Path,
+    reference_dir: Path,
+    preserve: set[str] | None = None,
+    lineage_claimed: set[str] | None = None,
 ) -> int:
     """刪除 clone 目錄中存在但 reference_dir（git tracked 樹 staging）沒有的過時檔案。
 
@@ -1022,6 +1025,7 @@ def clean_stale_files(
     回傳已刪除的檔案數量。
     """
     preserve = preserve or set()
+    lineage_claimed = lineage_claimed or set()
     CLEAN_EXCLUDE = {".git", "CHANGELOG.md", "VERSION", "README.md", "LICENSE", ".gitignore"}
     deleted_count = 0
 
@@ -1039,6 +1043,11 @@ def clean_stale_files(
             continue
         # preserve-listed 檔不刪除（專案特化，push 端刻意不推也不刪）
         if rel.as_posix() in preserve:
+            continue
+        # 被本地 lineage 重編號檔認領的上游 canonical 不刪除（PC-APP-002 / W1-039）：
+        # 本地把上游 PC-<N> 重編為 PC-<M> 後，上游 PC-<N>-<slug> 在本地無同名檔會被
+        # 誤列孤兒；其溯源註解明說上游應保留原號供下次 pull 去重，故排除於 --clean。
+        if rel.as_posix() in lineage_claimed:
             continue
         # 檢查 tracked 樹 staging 是否有對應檔案
         if not (reference_dir / rel).exists():
@@ -1067,7 +1076,10 @@ def clean_stale_files(
 
 
 def detect_uncleaned_deletions(
-    temp_dir: Path, reference_dir: Path, preserve: set[str] | None = None
+    temp_dir: Path,
+    reference_dir: Path,
+    preserve: set[str] | None = None,
+    lineage_claimed: set[str] | None = None,
 ) -> list[str]:
     """偵測遠端 clone（temp_dir）存在但本地 git tracked 樹（reference_dir）已無的檔案。
 
@@ -1095,6 +1107,7 @@ def detect_uncleaned_deletions(
         list[str]: 遠端存在但本地 tracked 樹已無的檔案相對路徑（已排序），無則空 list
     """
     preserve = preserve or set()
+    lineage_claimed = lineage_claimed or set()
     CLEAN_EXCLUDE = {".git", "CHANGELOG.md", "VERSION", "README.md", "LICENSE", ".gitignore"}
     orphans: list[str] = []
     for file_path in sorted(temp_dir.rglob("*")):
@@ -1110,6 +1123,11 @@ def detect_uncleaned_deletions(
             continue
         # preserve-listed 檔（push 端刻意不推）不算孤兒，與 clean_stale_files 對齊
         if rel.as_posix() in preserve:
+            continue
+        # 被本地 lineage 重編號檔認領的上游 canonical 不算孤兒（PC-APP-002 / W1-039）：
+        # 與 clean_stale_files 對齊，確保「警告/可刪的檔」恰為「真孤兒」（含讓位後的
+        # native intruder），不誤報受 lineage 保護的上游 canonical。
+        if rel.as_posix() in lineage_claimed:
             continue
         if not (reference_dir / rel).exists():
             orphans.append(str(rel))
@@ -1173,6 +1191,35 @@ def _dry_run_report_pc_collision(claude_dir: Path, upstream_clone: Path) -> None
         f" / 原樣推送 {untouched}",
         "green",
     )
+
+    # 孤兒辨識預覽（PC-APP-002 / W1-039）：列出「上游有、本地 PC 重編後已無同名檔」
+    # 的上游 PC 檔，並標明哪些受 lineage 認領保護（不清）、哪些為真孤兒（讓位後的
+    # native intruder，可清）。純讀取，供 step-4 驗證辨識正確性。
+    lineage_claimed = compute_lineage_claimed_upstream_files(claude_dir)
+    local_pc_rel: set[str] = set()
+    if ep_root.is_dir():
+        for path in ep_root.rglob("PC-*.md"):
+            rel = path.relative_to(claude_dir).as_posix()
+            if parse_pc_filename(rel) is not None:
+                local_pc_rel.add(rel)
+    up_ep = upstream_clone / "error-patterns"
+    protected = true_orphans = 0
+    if up_ep.is_dir():
+        print_color("   上游 PC 孤兒辨識（本地重編後上游殘留）：")
+        for path in sorted(up_ep.rglob("PC-*.md")):
+            rel = path.relative_to(upstream_clone).as_posix()
+            if parse_pc_filename(rel) is None or rel in local_pc_rel:
+                continue
+            if rel in lineage_claimed:
+                protected += 1
+                print_color(f"     [保留] {rel}（lineage 認領的框架 canonical）", "green")
+            else:
+                true_orphans += 1
+                print_color(f"     [真孤兒] {rel}（無人認領，--clean 可清）", "yellow")
+        print_color(
+            f"   孤兒辨識：受 lineage 保護 {protected} / 真孤兒可清 {true_orphans}",
+            "green",
+        )
     print_color("--- PC 撞號對帳預覽結束 ---", "yellow")
 
 
@@ -1407,6 +1454,51 @@ def parse_local_lineage(content: str) -> tuple[int, int] | None:
     if m is None:
         return None
     return int(m.group(1)), int(m.group(2))
+
+
+def compute_lineage_claimed_upstream_files(claude_dir: Path) -> set[str]:
+    """掃描本地 error-patterns，回傳「被本地 lineage 重編號檔以溯源註解認領」的
+    上游 repo 相對路徑集合（form: error-patterns/.../PC-<上游號>-<slug>.md）。
+
+    Why（PC-APP-002 + 1.2.0-W1-039）：detect_uncleaned_deletions / clean_stale_files
+    以純檔名比對判孤兒（上游有、本地 tracked 樹無 → 孤兒）。但本地把上游 canonical
+    PC-<N> 重編為 PC-<M>（注入 lineage 註解，保留 slug）後，上游的 PC-<N>-<slug>
+    在本地已無同名檔，會被誤列孤兒——若帶 --clean 會刪掉上游 canonical（PC-APP-002
+    近失）。本函式重建「本地 lineage 檔認領了哪些上游 (號, slug)」，供孤兒偵測排除，
+    使框架 canonical 受保護。
+
+    Consequence（不做）：renumber native intruder 讓位後，--clean 無法區分
+    「上游 canonical（被 lineage 認領，應保留）」與「上游 native intruder（無人認領，
+    應清）」，兩者同列孤兒——保守起見只能整批不清（intruder 永留），或誤刪 canonical。
+
+    Action：對每個本地 bare PC 檔，若含 lineage 註解（上游號, 本地號）且檔名 slug 與
+    本地號一致，則認領上游 `error-patterns/<同子目錄>/PC-<上游號>-<slug>.md`。回傳這些
+    上游路徑集合。native intruder（如 PC-184-malformed，lineage None）不認領任何上游檔，
+    故上游殘留的 PC-177-malformed 仍為真孤兒可清——這正是讓位後欲達成的辨識。
+
+    純讀取：只讀本地檔，不碰網路 / 上游。
+    """
+    claimed: set[str] = set()
+    ep_root = claude_dir / "error-patterns"
+    if not ep_root.is_dir():
+        return claimed
+    for path in sorted(ep_root.rglob("PC-*.md")):
+        repo_rel = path.relative_to(claude_dir).as_posix()
+        parsed = parse_pc_filename(repo_rel)
+        if parsed is None:
+            continue
+        _local_num, slug = parsed
+        try:
+            content = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        lineage = parse_local_lineage(content)
+        if lineage is None:
+            continue
+        upstream_num, _ln = lineage
+        prefix = repo_rel.rsplit("/", 1)[0]
+        claimed.add(f"{prefix}/PC-{upstream_num}-{slug}.md")
+    return claimed
 
 
 def build_upstream_pc_index(upstream_root: Path) -> dict:
@@ -1890,18 +1982,31 @@ def main() -> None:
             )
             print_color("   注意: CLAUDE.md 不再同步（專案特定配置）")
 
+            # 孤兒偵測前重建 lineage 認領集（PC-APP-002 / W1-039）：本地 lineage
+            # 重編號檔認領的上游 canonical（如 PC-181 認領上游 PC-177-defensive）不算
+            # 孤兒，避免 --clean 誤刪框架 canonical。讓位後的 native intruder（PC-184
+            # 等，無 lineage）不認領上游，故上游殘留 PC-177-malformed 仍為真孤兒可清。
+            lineage_claimed = compute_lineage_claimed_upstream_files(claude_dir)
+            if lineage_claimed:
+                print_color(
+                    f"   lineage 認領上游 canonical：{len(lineage_claimed)} 個（孤兒偵測排除）",
+                    "green",
+                )
+
             # 7.5. 清理遠端過時檔案（僅 --clean 模式）。
             # 以 staging（tracked 樹）為基準：git rm 的檔不在 staging → 從遠端刪除（K）。
             if clean_mode:
                 print_color("清理遠端過時檔案（對齊 git tracked 樹）...")
-                deleted = clean_stale_files(temp_dir, staging_dir, preserve)
+                deleted = clean_stale_files(
+                    temp_dir, staging_dir, preserve, lineage_claimed
+                )
                 print_color(f"   已清理 {deleted} 個遠端過時檔案", "green")
             else:
                 # 未帶 --clean 時偵測本地已 git rm 但遠端殘留的孤兒（R2 soft 警告，
                 # 不阻擋、不改 --clean 預設）。在 staging rmtree 前計算並暫存，
                 # 待 push 成功後於結尾輸出提醒。
                 uncleaned_deletions = detect_uncleaned_deletions(
-                    temp_dir, staging_dir, preserve
+                    temp_dir, staging_dir, preserve, lineage_claimed
                 )
         finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
