@@ -44,7 +44,7 @@ versions:
         priority: P3
         target_version: null
       - id: TD-P3-004
-        description: "version-release CLI 無法用於本專案發版。真因（修正先前『誤判 chrome-ext』說法）：preflight 要求 v{version}-main.md 而本專案主日誌命名不符 + worklog 路徑 version-release 預設扁平與 ticket CLI 巢狀不一致。已在地解決（v1.2.0）：.version-release.yaml 補 project_type:flutter + version_source:app/pubspec.yaml + worklog_path_pattern 改巢狀對齊 ticket CLI + 補 v1.2.0-main.md；check 通過、release --dry-run 正確。CLI 本體 cosmetic/限制（chrome-ext 報告無條件印、detect_version_files 不採 version_source、trunk 仍提示 feature 分支、主日誌固定命名）已記 docs/upstream-feedback/version-release-monorepo-gaps.md 待回上游。見 PC-TUNL-001"
+        description: "version-release CLI 無法用於本專案發版。真因（修正先前『誤判 chrome-ext』說法）：preflight 要求 v{version}-main.md 而本專案主日誌命名不符 + worklog 路徑 version-release 預設扁平與 ticket CLI 巢狀不一致。已在地解決（v1.2.0）：.version-release.yaml 補 project_type:flutter + version_source:app/pubspec.yaml + worklog_path_pattern 改巢狀對齊 ticket CLI + 補 v1.2.0-main.md；check 通過、release --dry-run 正確。CLI 本體 cosmetic/限制（chrome-ext 報告無條件印、detect_version_files 不採 version_source、trunk 仍提示 feature 分支、主日誌固定命名）已記 docs/upstream-feedback/version-release-monorepo-gaps.md 並開 framework-issue tarrragon/claude#4 追蹤上游修正；取捨判斷寫入 skill references/monorepo-versioning-strategy.md。見 PC-TUNL-001"
         priority: P3
         target_version: "1.2.0"
         status: resolved-local

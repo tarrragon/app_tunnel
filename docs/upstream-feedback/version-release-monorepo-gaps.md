@@ -3,6 +3,8 @@
 > 消費端：app_tunnel（monorepo：app/ Flutter + server/ Go，trunk all-on-main，單一版本號 tag 整個產品）。
 > 上游：tarrragon/claude.git 的 `.claude/skills/version-release`。
 > 發現於 TD-P3-004（v1.2.0）。本專案已用專案 config + worklog 對齊在地解決可用性，但下列為 CLI 本體層級問題，需回上游修正。
+>
+> **上游追蹤**：framework-issue [tarrragon/claude#4](https://github.com/tarrragon/claude/issues/4)（相關已關閉 #3：Flutter version detection 假陽性）。取捨判斷已寫入 skill `references/monorepo-versioning-strategy.md`（待 sync-push 上游）。
 
 ## 在地已解決（專案 config）
 
