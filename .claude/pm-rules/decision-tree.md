@@ -101,6 +101,21 @@ Skill 是預建的專用工具，優先於代理人派發。
 
 ---
 
+## 認知接地雙層（決策第一級護欄，1.2.0-W1-033）
+
+> 條件觸發層（依「決策閘門預算原則」lazy 化）。決策失敗最大兩軸是「信念是否對齊世界」（F 知識缺口 + D 狀態漂移，N=326 快照合佔 53.7%），非功能/分類軸。第一級護欄按信念接地分流——事前查證（F）+ 事後對帳（D），手段不對稱。
+
+| 層 | 觸發時機（行動的事前/事後） | 守則 | 手段 |
+|----|--------------------------|------|------|
+| L_ground-before（F，判斷協議） | 斷言當下事實 / 採信工具行為 / 宣稱做不到 / 假設沒人做過 **之前** | 強制最小實證再行動（--help / 實機跑一次 / ls 二元查證 / 掃既有） | 勸告型協議（不可機械強制，最大漏口） |
+| L_ground-truth（D，機械閘門） | claim / complete / commit / spawn **之後** | believed-state == world，用固定值比對（`git rev-parse`、`ticket track query`） | 強制型 hook |
+
+> **手段不對稱（核心）**：F 難機械化只能靠協議、D 可驗證走機械閘門；體系化 ≠ 對兩軸用同一手段。**軸登錄協議**：新閘門 bottom-up 宣告所屬軸（子系統壓力→露軸→守該軸→登錄），不 top-down 預切層。
+>
+> F+D 為語料快照（2026-06-18，N=326），非永久前提；校準走 `.claude/methodologies/empirical-decision-axis-discovery-methodology.md`。完整層職責 / 承載機制 / 相容對照（WRAP Step0 / tool-output-trust 規則 3,5 / saffron / 028-030 hook 各歸哪層） → `.claude/references/cognitive-grounding-layers.md`。
+
+---
+
 ## 路由表
 
 | 分支條件 | 路由檔案 | 適用場景 |
@@ -118,6 +133,7 @@ Skill 是預建的專用工具，優先於代理人派發。
 | 代理人派發後快速完成通知（< 2 分鐘） | agent-failure-sop.md 失敗判斷前置步驟 Step 0.5 / 0.5-A | 強制 TaskOutput status 查詢；禁止用 Hook 訊號推論失敗（PC-050 模式 E / PC-070） |
 | Ticket claim 時 AC 驗證 / stale 警告觸發 | ticket-lifecycle.md「AC 漂移偵測」 | S3/S4 外溢情境三選一決策（繼續 / 取消 / 轉 complete）；CRITICAL stale 強制重新評估（PC-055 / PROP-010） |
 | 非主動造成的 Ticket 狀態變化 | 本檔案「並行 Session/Terminal 判斷層」 | 偵測到 started_at 新時間戳 / 非本 session 的 complete/release / 檔案內容被他人修改時，先停手判斷是否為並行 terminal（PC-078） |
+| 行動前斷言事實 / 採信工具 / 宣稱做不到（F 軸）；行動後狀態對帳（D 軸） | 本檔案「認知接地雙層」 + `.claude/references/cognitive-grounding-layers.md` | 事前最小實證（L_ground-before 協議）+ 事後固定值對帳（L_ground-truth 機械閘門）；軸登錄協議與相容對照見 reference |
 | 執行中發現 | execution-discovery-rules.md | 技術債、超範圍需求 |
 | 完成後發現 | execution-discovery-rules.md 3.5-B | completed Ticket 交付物需修正 |
 | 任務完成 | completion-checkpoint-rules.md | Checkpoint 循環（0/0.5/1/1.5/1.8/1.9/2/3/4/R） |
@@ -162,7 +178,9 @@ Skill 是預建的專用工具，優先於代理人派發。
 
 ---
 
-**Last Updated**: 2026-04-28
+**Last Updated**: 2026-06-18
+**Version**: 9.7.0 — 新增「認知接地雙層」結構（L_ground-before F 判斷協議 + L_ground-truth D 機械閘門 + 軸登錄協議）+ 路由表一列；詳細協議 / 承載機制 / 相容對照外移 `.claude/references/cognitive-grounding-layers.md`（遵決策閘門預算原則 lazy 化）（1.2.0-W1-035 落地，1.2.0-W1-033 設計）
+
 **Version**: 9.6.0 — 新增路由：書面文字品質審查（強制：情境 C/D/F/G）→ parallel-evaluation SKILL + basil-writing-critic 委員觸發條件（W17-058 落地）
 
 **Version**: 9.5.0 — 新增路由：反思迴路偵測 → reflection-termination.md（W15-010 Layer 3 落地）
