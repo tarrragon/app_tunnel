@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/features/terminal/renderer/ansi_parser.dart';
 import 'package:app_tunnel/features/terminal/renderer/terminal_buffer.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +22,9 @@ class TerminalRenderer extends StatefulWidget {
   final double fontSize;
   final Color defaultForeground;
 
-  static const Color _defaultForegroundColor = Color(0xFFE0E0E0);
-  static const Color _backgroundColor = Color(0xFF1E1E1E);
+  // 需求：[1.2.0-W1-023] 套用 014 重配：ANSI 預設前景/背景改引 AppColors。
+  static const Color _defaultForegroundColor = AppColors.kAnsiDefaultForeground;
+  static const Color _backgroundColor = AppColors.kAnsiDefaultBackground;
 
   @override
   State<TerminalRenderer> createState() => _TerminalRendererState();
