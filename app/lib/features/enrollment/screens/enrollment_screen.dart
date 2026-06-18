@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
+import 'package:app_tunnel/core/theme/app_spacing.dart';
+import 'package:app_tunnel/core/theme/app_typography.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -114,33 +116,99 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
 
   Widget _buildContent() {
     final l10n = AppLocalizations.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(
-          Icons.qr_code_scanner,
-          size: UiConstants.enrollmentIconSize,
-        ),
-        const SizedBox(height: UiConstants.sectionSpacing),
-        Text(l10n.enrollmentInstruction),
-        const SizedBox(height: UiConstants.sectionSpacing),
-        PrimaryActionButton(
-          onPressed: _startEnrollment,
-          icon: Icons.camera_alt,
-          label: l10n.enrollmentScanButton,
-        ),
-        if (_statusMessage != null) ...[
-          const SizedBox(height: UiConstants.itemSpacing),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.kSpaceLg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIconPanel(),
+          const SizedBox(height: AppSpacing.kSpaceLg),
+          _buildInstruction(l10n.enrollmentInstruction),
+          const SizedBox(height: AppSpacing.kSpaceXl),
+          SizedBox(
+            width: double.infinity,
+            child: PrimaryActionButton(
+              onPressed: _startEnrollment,
+              icon: Icons.camera_alt,
+              label: l10n.enrollmentScanButton,
+            ),
+          ),
+          if (_statusMessage != null) ...[
+            const SizedBox(height: AppSpacing.kSpaceLg),
+            _buildStatusChip(_statusMessage!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// QR icon 框於 surface 圓盤中，作配對動作的儀表焦點。
+  Widget _buildIconPanel() {
+    return Container(
+      width: UiConstants.enrollmentIconSize + AppSpacing.kSpaceXl,
+      height: UiConstants.enrollmentIconSize + AppSpacing.kSpaceXl,
+      decoration: const BoxDecoration(
+        color: AppColors.kColorSurface,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.qr_code_scanner,
+        size: UiConstants.enrollmentIconSize,
+        color: AppColors.kColorPrimary,
+      ),
+    );
+  }
+
+  /// 配對說明：次要墨色置中，承載 body 階層。
+  Widget _buildInstruction(String text) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: AppColors.kColorInkMuted,
+        fontSize: AppTypography.kFontBodySize,
+        fontWeight: AppTypography.kFontBodyWeight,
+        height: AppTypography.kLineHeightUi,
+      ),
+    );
+  }
+
+  /// 狀態訊息：以語意色填底的 surface chip，提升信號可見度。
+  Widget _buildStatusChip(String message) {
+    final isSuccess = message.contains('successful');
+    final statusColor = isSuccess
+        ? AppColors.kColorStatusConnected
+        : AppColors.kColorStatusError;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.kSpaceMd,
+        vertical: AppSpacing.kSpaceSm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.kColorSurface,
+        borderRadius: BorderRadius.circular(AppSpacing.kSpaceSm),
+        border: Border.all(color: statusColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+            size: AppTypography.kFontBodySize,
+            color: statusColor,
+          ),
+          const SizedBox(width: AppSpacing.kSpaceXs),
           Text(
-            _statusMessage!,
+            message,
             style: TextStyle(
-              color: _statusMessage!.contains('successful')
-                  ? AppColors.kColorStatusConnected
-                  : AppColors.kColorStatusError,
+              color: statusColor,
+              fontSize: AppTypography.kFontLabelSize,
+              fontWeight: AppTypography.kFontLabelWeight,
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }

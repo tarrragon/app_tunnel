@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:app_tunnel/l10n/app_localizations.dart';
+import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
+import 'package:app_tunnel/core/theme/app_spacing.dart';
 import 'package:app_tunnel/core/errors/enrollment_errors.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/enrollment/credential_payload_parser.dart';
@@ -55,15 +57,16 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             controller: _controller,
             onDetect: _onBarcodeDetected,
           ),
-          _buildScanOverlay(),
+          _buildScanCutout(),
+          _buildScanFrame(),
           if (_errorMessage != null) _buildErrorBanner(),
         ],
       ),
     );
   }
 
-  /// Semi-transparent overlay with a clear center scanning area.
-  Widget _buildScanOverlay() {
+  /// 暗化全屏並挖空中央對焦區（srcOut 鏤空）。
+  Widget _buildScanCutout() {
     return ColorFiltered(
       colorFilter: const ColorFilter.mode(
         AppColors.kColorScrim,
@@ -81,15 +84,33 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           ),
           Center(
             child: Container(
-              width: 250,
-              height: 250,
+              width: UiConstants.qrScanFrameSize,
+              height: UiConstants.qrScanFrameSize,
               decoration: BoxDecoration(
-                color: Colors.red, // Any color; srcOut makes it transparent.
-                borderRadius: BorderRadius.circular(16),
+                // 任意不透明色；srcOut 將其轉為鏤空。
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(AppSpacing.kSpaceMd),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 對焦框：cobalt 描邊標示掃描區，作儀表式取景框。
+  Widget _buildScanFrame() {
+    return Center(
+      child: Container(
+        width: UiConstants.qrScanFrameSize,
+        height: UiConstants.qrScanFrameSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.kSpaceMd),
+          border: Border.all(
+            color: AppColors.kColorPrimary,
+            width: AppSpacing.kSpaceXs / 2,
+          ),
+        ),
       ),
     );
   }
