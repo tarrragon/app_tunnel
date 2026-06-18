@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:app_tunnel/core/constants/ui_constants.dart';
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -134,8 +135,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
             _statusMessage!,
             style: TextStyle(
               color: _statusMessage!.contains('successful')
-                  ? Colors.green
-                  : Colors.red,
+                  ? AppColors.kColorStatusConnected
+                  : AppColors.kColorStatusError,
             ),
           ),
         ],
