@@ -4,6 +4,13 @@
 
 ### Added
 - 根目錄一鍵啟動腳本 `bootstrap.sh`：自動檢查依賴 → 缺就安裝（ttyd/qrencode/Go）→ 編譯 proxy → 起服務，旗標與 `deploy/scripts/start.sh` 一致並原樣轉發（Tailscale 只檢查不自動處理，因 `tailscale up` 需互動式 SSO）
+- CI 新增 Flutter job（pub get + analyze + test），補上 Flutter 端編譯守門（原 CI 僅涵蓋 Go server）
+
+### Changed
+- app Dart SDK 約束從 `^3.11.1` 降為 `^3.10.0`（原為 scaffold 自帶下限、無功能依據，擋住 Flutter 3.38.10 編譯）；降後 `flutter analyze` 零問題、173 測試全通過
+
+### Fixed
+- 清除 7 個 test 檔的 analyze 警告（未用欄位 `_sinkController`、未用 import、檔頭 dangling doc comment）
 
 ## [1.0.0] - 2026-06-18
 
