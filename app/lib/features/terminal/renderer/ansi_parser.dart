@@ -1,3 +1,4 @@
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:flutter/painting.dart';
 
 /// 需求：[SPEC-004 FR-04] ANSI escape sequence 解析
@@ -67,28 +68,12 @@ class AnsiParser {
   bool _currentBold = false;
 
   /// 標準 8 色 ANSI 調色盤。
-  static const List<Color> standardColors = [
-    Color(0xFF000000), // black
-    Color(0xFFCD0000), // red
-    Color(0xFF00CD00), // green
-    Color(0xFFCDCD00), // yellow
-    Color(0xFF0000EE), // blue
-    Color(0xFFCD00CD), // magenta
-    Color(0xFF00CDCD), // cyan
-    Color(0xFFE5E5E5), // white
-  ];
+  /// 需求：[1.2.0-W1-023] 套用 014 重配常數（語意保真：索引邏輯與色相身分不動，僅換值）。
+  static const List<Color> standardColors = AppColors.kAnsiStandard;
 
   /// 亮色 8 色 ANSI 調色盤。
-  static const List<Color> brightColors = [
-    Color(0xFF7F7F7F), // bright black (gray)
-    Color(0xFFFF0000), // bright red
-    Color(0xFF00FF00), // bright green
-    Color(0xFFFFFF00), // bright yellow
-    Color(0xFF5C5CFF), // bright blue
-    Color(0xFFFF00FF), // bright magenta
-    Color(0xFF00FFFF), // bright cyan
-    Color(0xFFFFFFFF), // bright white
-  ];
+  /// 需求：[1.2.0-W1-023] 套用 014 重配常數（bright 明度恆高於對應 normal）。
+  static const List<Color> brightColors = AppColors.kAnsiBright;
 
   /// ESC[ 序列的正規表達式。
   static final RegExp _escapePattern = RegExp(r'\x1B\[([0-9;]*)([A-Za-z])');

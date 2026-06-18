@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/features/terminal/renderer/terminal_renderer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -93,9 +94,9 @@ void main() {
         ),
       ));
 
-      // 驗證 Container 背景色
+      // 驗證 Container 背景色（1.2.0-W1-023：套用 014 重配的 ANSI 預設背景）
       final container = tester.widget<Container>(find.byType(Container));
-      expect(container.color, const Color(0xFF1E1E1E));
+      expect(container.color, AppColors.kAnsiDefaultBackground);
 
       await controller.close();
     });
