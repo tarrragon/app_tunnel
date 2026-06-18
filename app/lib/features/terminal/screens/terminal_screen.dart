@@ -13,6 +13,7 @@ import 'package:app_tunnel/features/terminal/keyboard/terminal_toolbar.dart';
 import 'package:app_tunnel/features/terminal/protocol/terminal_protocol.dart';
 import 'package:app_tunnel/features/terminal/renderer/terminal_renderer.dart';
 import 'package:app_tunnel/features/terminal/screens/terminal_screen_state.dart';
+import 'package:app_tunnel/shared/widgets/primary_action_button.dart';
 
 /// 需求：[UC-02] 終端機主畫面
 /// 整合 ConnectionManager + TerminalRenderer + TerminalToolbar，
@@ -244,11 +245,11 @@ class TerminalScreenState extends State<TerminalScreen>
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
+          PrimaryActionButton(
             key: const Key('reconnect_button'),
             onPressed: _reconnect,
-            icon: const Icon(Icons.refresh),
-            label: Text(l10n.terminalReconnect),
+            icon: Icons.refresh,
+            label: l10n.terminalReconnect,
           ),
         ],
       ),
@@ -272,11 +273,11 @@ class TerminalScreenState extends State<TerminalScreen>
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
+          PrimaryActionButton(
             key: const Key('reconnect_button'),
             onPressed: _reconnect,
-            icon: const Icon(Icons.refresh),
-            label: Text(l10n.terminalReconnect),
+            icon: Icons.refresh,
+            label: l10n.terminalReconnect,
           ),
         ],
       ),
