@@ -1,6 +1,6 @@
-> **編號溯源**：本 pattern 在上游框架 repo（tarrragon/claude.git）編號為 PC-18。因本專案 PC-18 已被既有 pattern 佔用，於本專案重新編號為 PC-183。下次 sync-pull 仍會帶回上游 PC-18，屆時應辨識為同一 pattern 並去重。
+> **編號溯源**：本 pattern 在上游框架 repo（tarrragon/claude.git）編號為 PC-018。因本專案 PC-018 已被既有 pattern 佔用，於本專案重新編號為 PC-183。下次 sync-pull 仍會帶回上游 PC-018，屆時應辨識為同一 pattern 並去重。
 
-# PC-018: 並行代理人建立重疊的後續 Ticket
+# PC-183: 並行代理人建立重疊的後續 Ticket
 
 ---
 
