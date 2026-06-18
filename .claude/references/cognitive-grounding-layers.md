@@ -125,6 +125,7 @@ F+D 雙層**全是既有零件重組，非新發明**。既有機制各歸層如
 | `empirical-decision-axis-discovery-methodology.md` | 提供「如何發現主導軸」的可重跑方法；本檔是「用該方法跑出 F+D 後的落地結構」。方法是耐久資產，本檔結論是快照 |
 | `tool-output-trust-rules.md` | 提供 F/D 兩軸的具體查證手段（規則 3 事前、規則 5 事後）；本檔把這些手段組織進兩層 |
 | `decision-trigger-binding.md` | 校準延後須綁 ticket trigger；本檔軸快照的重新校準走該規則 |
+| `decision-tree-parallel-session-details.md` | 並行壓力露出的 E 軸狀態漂移**具體處置 SOP**（停手問用戶 / 靜態 vs 動態判別）由該檔負責；本檔負責把 028/030 hook 登錄至 L_ground-truth(D) 並給**軸歸屬**。讀者遇「狀態被改」對帳：該檔查 SOP、本檔查軸結構（職責互補不重複）|
 
 ---
 
