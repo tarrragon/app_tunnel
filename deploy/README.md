@@ -100,6 +100,22 @@ cp configs/ttyd.conf.example configs/ttyd.conf
 
 **啟動順序**: ttyd -> app-tunnel-proxy (proxy 需要 ttyd 在 7681 待命)。Tailscale daemon 已常駐。
 
+### 一鍵啟動（推薦）
+
+從專案根目錄執行 `bootstrap.sh`，自動檢查依賴、編譯 proxy、啟動服務：
+
+```bash
+./bootstrap.sh -u "帳號:密碼"
+```
+
+詳細說明見 `docs/USAGE.md`「快速開始」。
+
+### 起停腳本
+
+```bash
+./deploy/scripts/start.sh -u "帳號:密碼"
+```
+
 ### 手動啟動
 
 ```bash
