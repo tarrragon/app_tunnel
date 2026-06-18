@@ -77,7 +77,8 @@ class FakeBiometricService implements BiometricService {
   Future<bool> isAvailable() async => available;
 
   @override
-  Future<bool> authenticate() async => authResult;
+  Future<bool> authenticate({required String localizedReason}) async =>
+      authResult;
 }
 
 /// Fake WebSocket channel that supports bidirectional message exchange.

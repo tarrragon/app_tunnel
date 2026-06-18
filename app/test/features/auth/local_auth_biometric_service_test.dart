@@ -67,21 +67,21 @@ void main() {
       service = LocalAuthBiometricService(
         localAuth: _FakeLocalAuth(),
       );
-      expect(await service.authenticate(), isTrue);
+      expect(await service.authenticate(localizedReason: 'test reason'), isTrue);
     });
 
     test('returns false on failed authentication', () async {
       service = LocalAuthBiometricService(
         localAuth: _FakeLocalAuth(authResult: false),
       );
-      expect(await service.authenticate(), isFalse);
+      expect(await service.authenticate(localizedReason: 'test reason'), isFalse);
     });
 
     test('returns false when biometrics unavailable', () async {
       service = LocalAuthBiometricService(
         localAuth: _FakeLocalAuth(deviceSupported: false),
       );
-      expect(await service.authenticate(), isFalse);
+      expect(await service.authenticate(localizedReason: 'test reason'), isFalse);
     });
   });
 }

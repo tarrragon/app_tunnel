@@ -67,7 +67,7 @@ void main() {
 
       // When: connect
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       // Then: Authorization header uses new credentials
       expect(lastHeaders.containsKey('Authorization'), isTrue);
@@ -83,7 +83,7 @@ void main() {
       // Given: connect with old credential
       await repository.save(testCredential());
       var manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       expect(manager.state, cs.ConnectionState.connected);
 
       final oldAuth =
@@ -94,7 +94,7 @@ void main() {
       // When: rotate credential and create new connection
       await repository.save(rotatedCredential());
       manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       // Then: new auth header
       final newAuth =
@@ -111,7 +111,7 @@ void main() {
       await repository.delete();
 
       final manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
 
       expect(manager.state, cs.ConnectionState.error);
       await manager.dispose();
@@ -126,7 +126,7 @@ void main() {
 
       // Step 2: Connect with initial credential
       var manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       expect(manager.state, cs.ConnectionState.connected);
       await manager.disconnect();
       await manager.dispose();
@@ -137,7 +137,7 @@ void main() {
 
       // Step 4: Reconnect with rotated credential
       manager = createManager();
-      await manager.connect();
+      await manager.connect(biometricReason: 'test reason');
       expect(manager.state, cs.ConnectionState.connected);
 
       final expectedAuth =

@@ -53,7 +53,11 @@ class TerminalScreenState extends State<TerminalScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _subscribeToConnectionState();
-    _startConnection();
+    // 延後至首幀後啟動連線：_startConnection 需讀取 AppLocalizations，
+    // 而 inherited widget 查詢不可在 initState 完成前執行（1.2.0-W1-027）。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _startConnection();
+    });
   }
 
   @override
@@ -128,13 +132,16 @@ class TerminalScreenState extends State<TerminalScreen>
   // -- 連線操作 --
 
   /// 需求：[UC-02] 啟動連線流程（Face ID -> 憑證 -> WS）
+  /// 由本畫面持有的 BuildContext 取得本地化生物辨識提示文字後注入。
   Future<void> _startConnection() async {
-    await widget.connectionManager.connect();
+    final biometricReason = AppLocalizations.of(context).authBiometricReason;
+    await widget.connectionManager.connect(biometricReason: biometricReason);
   }
 
   /// 需求：[UC-02] 重新連線
   Future<void> _reconnect() async {
-    await widget.connectionManager.reconnect();
+    final biometricReason = AppLocalizations.of(context).authBiometricReason;
+    await widget.connectionManager.reconnect(biometricReason: biometricReason);
   }
 
   // -- resize --
