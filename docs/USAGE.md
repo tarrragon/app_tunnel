@@ -6,7 +6,7 @@
 
 ## 快速開始（一鍵）
 
-懶得逐步跑 Step 1-4 的話，根目錄的 `bootstrap.sh` 會自動完成「檢查依賴 → 缺就安裝（ttyd/qrencode/Go）→ 編譯 proxy → 起服務」：
+根目錄的 `bootstrap.sh` 會自動完成「檢查依賴 → 缺就安裝（ttyd/qrencode/Go）→ 編譯 proxy → 起服務」：
 
 ```bash
 ./bootstrap.sh -u "你的帳號:你的密碼"
