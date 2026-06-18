@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:go_router/go_router.dart';
 
+import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/l10n/app_localizations.dart';
 import 'package:app_tunnel/shared/widgets/primary_action_button.dart';
 
@@ -19,7 +20,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l10n.homeHeadline),
-            const SizedBox(height: 24),
+            const SizedBox(height: UiConstants.sectionSpacing),
             PrimaryActionButton(
               key: const Key('connect_terminal_button'),
               onPressed: () => context.go('/terminal'),

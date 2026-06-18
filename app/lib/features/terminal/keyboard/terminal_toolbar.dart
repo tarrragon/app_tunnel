@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/features/terminal/keyboard/terminal_key_codes.dart';
 
 /// 需求：[SPEC-004 FR-04] 終端機特殊按鍵工具列
@@ -83,7 +84,10 @@ class _TerminalToolbarState extends State<TerminalToolbar> {
           onTap: _toggleCtrl,
           borderRadius: BorderRadius.circular(4),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: UiConstants.toolbarButtonPaddingH,
+              vertical: UiConstants.toolbarButtonPaddingV,
+            ),
             child: Text(
               'Ctrl',
               style: TextStyle(

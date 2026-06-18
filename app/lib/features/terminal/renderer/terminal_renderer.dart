@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_tunnel/core/constants/terminal_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/features/terminal/renderer/ansi_parser.dart';
 import 'package:app_tunnel/features/terminal/renderer/terminal_buffer.dart';
@@ -12,7 +13,7 @@ class TerminalRenderer extends StatefulWidget {
   const TerminalRenderer({
     required this.outputStream,
     this.maxBufferLines = 1000,
-    this.fontSize = 14.0,
+    this.fontSize = TerminalConstants.fontSize,
     this.defaultForeground = _defaultForegroundColor,
     super.key,
   });
