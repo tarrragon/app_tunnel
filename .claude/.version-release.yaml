@@ -18,6 +18,16 @@
 project_type: flutter
 
 # 版本源：app/pubspec.yaml 為產品版本 SoT（與 git tag v{version} 一致）
+#
+# 注意 pubspec.yaml 版本含 Flutter build-number 後綴（如 1.1.0+2，+2 為 build
+# number）。version_release.py 偵測時會自動剝離 +build 後綴取核心版本（1.1.0）。
+#
+# in-dev 覆寫：pubspec build 版可能落後開發中版本（worklog 已建 v{version} 子目錄、
+# pubspec 尚未 bump）。此時 detect_version() 比較 worklog 偵測到的最高 in-dev 版本
+# 與版本源版本，採較高者為目標，避免誤把落後的 build 版當發版目標。
+#
+# server/（Go）無獨立版本檔，採 tag-driven（與產品 tag v{version} 同步），
+# 故不在 version_source 列出；整個 monorepo 以單一產品版本號發版。
 version_source:
   primary: app/pubspec.yaml
   parser: yaml
