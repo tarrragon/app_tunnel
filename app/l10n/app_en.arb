@@ -72,6 +72,10 @@
   "@terminalConnecting": {
     "description": "Terminal connecting status text"
   },
+  "terminalDisconnect": "Disconnect",
+  "@terminalDisconnect": {
+    "description": "Terminal disconnect action button tooltip"
+  },
   "terminalDisconnected": "Disconnected",
   "@terminalDisconnected": {
     "description": "Terminal disconnected status text"

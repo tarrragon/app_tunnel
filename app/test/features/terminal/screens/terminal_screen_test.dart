@@ -238,6 +238,35 @@ void main() {
       },
     );
 
+    testWidgets(
+      'connected 狀態有 disconnect 按鈕',
+      (tester) async {
+        await tester.pumpWidget(buildTestApp());
+        await tester.pumpAndSettle();
+
+        // connected 狀態應顯示 disconnect IconButton
+        expect(
+          find.byKey(const Key('disconnect_button')),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'disconnected 畫面有 back 按鈕可返回',
+      (tester) async {
+        await tester.pumpWidget(buildTestApp());
+        await tester.pumpAndSettle();
+
+        // 斷線進入 disconnected 狀態
+        fakeChannel.simulateServerClose();
+        await tester.pumpAndSettle();
+
+        // disconnected view 應顯示 back 按鈕
+        expect(find.text('Back'), findsOneWidget);
+      },
+    );
+
     test('TerminalScreenUiState 列舉值完整', () {
       expect(
         TerminalScreenUiState.values,

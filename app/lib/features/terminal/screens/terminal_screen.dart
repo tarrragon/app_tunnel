@@ -354,6 +354,19 @@ class TerminalScreenState extends State<TerminalScreen>
               fontSize: AppTypography.kFontLabelSize,
             ),
           ),
+          const SizedBox(width: AppSpacing.kSpaceSm),
+          IconButton(
+            key: const Key('disconnect_button'),
+            icon: const Icon(
+              Icons.link_off,
+              color: AppColors.kColorInkMuted,
+              size: AppTypography.kFontLabelSize,
+            ),
+            onPressed: widget.connectionManager.disconnect,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            tooltip: l10n.terminalDisconnect,
+          ),
         ],
       ),
     );
