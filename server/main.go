@@ -92,6 +92,23 @@ func proxyHandler(target *url.URL, dialTimeout time.Duration, logger *slog.Logge
 		logger.Error("轉發 ttyd 失敗", "err", err.Error(), "client_ip", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadGateway)
 	}
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if !isWebSocketUpgrade(resp.Request) {
+			return nil
+		}
+		if resp.StatusCode == http.StatusSwitchingProtocols {
+			logger.Info("ws upgrade succeeded",
+				"client_ip", resp.Request.RemoteAddr,
+				"path", resp.Request.URL.Path,
+				"upstream_status", resp.StatusCode)
+		} else {
+			logger.Warn("ws upgrade failed",
+				"client_ip", resp.Request.RemoteAddr,
+				"path", resp.Request.URL.Path,
+				"upstream_status", resp.StatusCode)
+		}
+		return nil
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 稽核:記錄連線事件——對 shell 閘道,什麼連線通過了是入侵指標。

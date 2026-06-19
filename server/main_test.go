@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 )
@@ -64,6 +66,54 @@ func TestProxy_BackendDown_502(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 	if rec.Code != http.StatusBadGateway {
 		t.Fatalf("want 502, got %d", rec.Code)
+	}
+}
+
+func newTestHandlerWithLog(t *testing.T, upstream http.HandlerFunc) (http.Handler, *bytes.Buffer) {
+	t.Helper()
+	ttyd := httptest.NewServer(upstream)
+	t.Cleanup(ttyd.Close)
+	target, err := url.Parse(ttyd.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	return proxyHandler(target, 2*time.Second, logger), &buf
+}
+
+func TestProxy_WSUpgradeFail_Logged(t *testing.T) {
+	h, buf := newTestHandlerWithLog(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	})
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.Header.Set("Upgrade", "websocket")
+	req.Header.Set("Connection", "Upgrade")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("want 403, got %d", rec.Code)
+	}
+	logged := buf.String()
+	if !strings.Contains(logged, "ws upgrade failed") {
+		t.Fatalf("expected 'ws upgrade failed' in log, got:\n%s", logged)
+	}
+	if !strings.Contains(logged, "upstream_status=403") {
+		t.Fatalf("expected upstream_status=403 in log, got:\n%s", logged)
+	}
+}
+
+func TestProxy_NonWSRequest_NoUpgradeLog(t *testing.T) {
+	h, buf := newTestHandlerWithLog(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	logged := buf.String()
+	if strings.Contains(logged, "ws upgrade") {
+		t.Fatalf("non-WS request should not log ws upgrade, got:\n%s", logged)
 	}
 }
 
