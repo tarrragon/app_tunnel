@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:app_tunnel/l10n/app_localizations.dart';
@@ -268,6 +269,97 @@ void main() {
         // 無憑證 → error state
         expect(find.text('Connection error'), findsOneWidget);
         expect(find.byKey(const Key('reconnect_button')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'back 按鈕點擊後導航回首頁',
+      (tester) async {
+        // 使用 GoRouter 包裝，back 按鈕呼叫 context.go('/')
+        String? navigatedTo;
+        final router = GoRouter(
+          initialLocation: '/terminal',
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, state) =>
+                  const Scaffold(body: Text('Home')),
+            ),
+            GoRoute(
+              path: '/terminal',
+              builder: (context, state) => TerminalScreen(
+                connectionManager: connectionManager,
+                protocol: protocol,
+              ),
+            ),
+          ],
+          redirect: (context, state) {
+            navigatedTo = state.matchedLocation;
+            return null;
+          },
+        );
+        addTearDown(router.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // connected 狀態不顯示 back 按鈕；斷線後才有
+        fakeChannel.simulateServerClose();
+        await tester.pumpAndSettle();
+
+        // 點擊 Back 按鈕
+        await tester.tap(find.text('Back'));
+        await tester.pumpAndSettle();
+
+        expect(navigatedTo, equals('/'));
+      },
+    );
+
+    testWidgets(
+      'text input submit 將輸入送到 WS sink',
+      (tester) async {
+        await tester.pumpWidget(buildTestApp());
+        await tester.pumpAndSettle();
+
+        // connected 狀態下 TextField 可見
+        final textFieldFinder = find.byType(TextField);
+        expect(textFieldFinder, findsOneWidget);
+
+        // 輸入文字並 submit
+        await tester.enterText(textFieldFinder, 'hello');
+        await tester.testTextInput.receiveAction(TextInputAction.send);
+        await tester.pump();
+
+        // _submitInput 應將 'hello\n' 編碼後送到 sink
+        final expectedFrame = protocol.encodeInput('hello\n');
+        final expectedText = String.fromCharCodes(expectedFrame);
+        expect(fakeChannel._sinkItems, contains(expectedText));
+      },
+    );
+
+    testWidgets(
+      'connected 狀態顯示 status bar（標題與連線狀態文字）',
+      (tester) async {
+        await tester.pumpWidget(buildTestApp());
+        await tester.pumpAndSettle();
+
+        // 確認已 connected
+        final state = tester.state<TerminalScreenState>(
+          find.byType(TerminalScreen),
+        );
+        expect(state.screenState, TerminalScreenUiState.connected);
+
+        // status bar 顯示 Terminal 標題
+        expect(find.text('Terminal'), findsOneWidget);
+
+        // status bar 顯示 Connected 狀態文字
+        expect(find.text('Connected'), findsOneWidget);
       },
     );
   });
