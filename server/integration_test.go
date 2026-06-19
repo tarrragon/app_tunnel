@@ -141,6 +141,92 @@ func TestIntegration_WSUpgradeForwarded(t *testing.T) {
 	}
 }
 
+// -- WebSocket Upgrade Log Verification --
+
+func TestIntegration_WSUpgradeSuccess_Logged(t *testing.T) {
+	ttyd := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			hj, ok := w.(http.Hijacker)
+			if !ok {
+				t.Fatal("upstream does not support hijack")
+			}
+			conn, bufrw, err := hj.Hijack()
+			if err != nil {
+				t.Fatal(err)
+			}
+			bufrw.WriteString("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n")
+			bufrw.Flush()
+			conn.Close()
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ttyd.Close()
+
+	target, _ := url.Parse(ttyd.URL)
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	proxySrv := httptest.NewServer(proxyHandler(target, 2*time.Second, logger))
+	defer proxySrv.Close()
+
+	req, _ := http.NewRequest(http.MethodGet, proxySrv.URL+"/ws", nil)
+	req.Header.Set("Upgrade", "websocket")
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Sec-WebSocket-Key", "dGhlIHNhbXBsZSBub25jZQ==")
+	req.Header.Set("Sec-WebSocket-Version", "13")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("WS upgrade request failed: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		t.Fatalf("want 101, got %d", resp.StatusCode)
+	}
+	logged := logBuf.String()
+	if !strings.Contains(logged, "ws upgrade succeeded") {
+		t.Fatalf("expected 'ws upgrade succeeded' in log, got:\n%s", logged)
+	}
+	if !strings.Contains(logged, "upstream_status=101") {
+		t.Fatalf("expected upstream_status=101 in log, got:\n%s", logged)
+	}
+}
+
+func TestIntegration_WSUpgradeFail_Logged(t *testing.T) {
+	ttyd := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer ttyd.Close()
+
+	target, _ := url.Parse(ttyd.URL)
+	var logBuf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logBuf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	proxySrv := httptest.NewServer(proxyHandler(target, 2*time.Second, logger))
+	defer proxySrv.Close()
+
+	req, _ := http.NewRequest(http.MethodGet, proxySrv.URL+"/ws", nil)
+	req.Header.Set("Upgrade", "websocket")
+	req.Header.Set("Connection", "Upgrade")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("want 403, got %d", resp.StatusCode)
+	}
+	logged := logBuf.String()
+	if !strings.Contains(logged, "ws upgrade failed") {
+		t.Fatalf("expected 'ws upgrade failed' in log, got:\n%s", logged)
+	}
+	if !strings.Contains(logged, "upstream_status=403") {
+		t.Fatalf("expected upstream_status=403 in log, got:\n%s", logged)
+	}
+}
+
 // -- Graceful Shutdown --
 
 // TestIntegration_GracefulShutdown verifies that the server stops accepting new
