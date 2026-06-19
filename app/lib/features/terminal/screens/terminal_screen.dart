@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:app_tunnel/core/constants/terminal_constants.dart';
+import 'package:app_tunnel/core/logging/app_logger.dart';
 import 'package:app_tunnel/core/constants/ui_constants.dart';
 import 'package:app_tunnel/core/theme/app_colors.dart';
 import 'package:app_tunnel/core/theme/app_spacing.dart';
@@ -111,9 +111,9 @@ class TerminalScreenState extends State<TerminalScreen>
 
   void _updateScreenState(TerminalScreenUiState newState) {
     if (_screenState == newState) return;
-    developer.log(
-      'UI state: $_screenState -> $newState',
-      name: 'TerminalScreen',
+    AppLogger.info(
+      'UI state: $_screenState -> $newState', // i18n-exempt
+      component: 'TerminalScreen',
     );
     setState(() {
       _screenState = newState;
@@ -127,10 +127,10 @@ class TerminalScreenState extends State<TerminalScreen>
     _outputSubscription =
         widget.connectionManager.outputStream.listen((rawFrame) {
       // i18n-exempt: debug logging for output pipeline
-      developer.log('rawFrame type=${rawFrame.runtimeType}', name: 'Output');
+      AppLogger.info('rawFrame type=${rawFrame.runtimeType}', component: 'TerminalScreen'); // i18n-exempt
       final decoded = widget.protocol.decodeOutput(rawFrame);
       // i18n-exempt
-      developer.log('decoded=${decoded != null ? "${decoded.length}chars" : "null"}', name: 'Output');
+      AppLogger.info('decoded=${decoded != null ? "${decoded.length}chars" : "null"}', component: 'TerminalScreen'); // i18n-exempt
       if (decoded != null) {
         _decodedOutputController.add(decoded);
       }
@@ -188,9 +188,9 @@ class TerminalScreenState extends State<TerminalScreen>
           .clamp(TerminalConstants.minRows, TerminalConstants.maxRows);
 
   void _sendResize({required int columns, required int rows}) {
-    developer.log(
-      'Sending resize: ${columns}x$rows',
-      name: 'TerminalScreen',
+    AppLogger.info(
+      'Sending resize: ${columns}x$rows', // i18n-exempt
+      component: 'TerminalScreen',
     );
     final frame = widget.protocol.encodeResize(
       columns: columns,
@@ -212,7 +212,7 @@ class TerminalScreenState extends State<TerminalScreen>
   void _submitInput(String value) {
     if (value.isEmpty) return;
     // i18n-exempt
-    developer.log('submitInput: "$value"', name: 'TerminalScreen');
+    AppLogger.info('submitInput: "$value"', component: 'TerminalScreen'); // i18n-exempt
     _onKeyInput(widget.protocol.encodeInput('$value\n'));
     _inputController.clear();
     _inputFocusNode.requestFocus();

@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
-import 'dart:io' as io;
 import 'dart:typed_data';
 
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:app_tunnel/core/constants/terminal_constants.dart';
+import 'package:app_tunnel/core/logging/app_logger.dart';
 import 'package:app_tunnel/features/auth/biometric_service.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
@@ -82,17 +81,17 @@ class ConnectionManager {
     _transitionTo(ConnectionState.connecting);
 
     try {
-      developer.log('Step 1: biometric auth...', name: 'ConnectionManager'); // i18n-exempt
+      AppLogger.info('Step 1: biometric auth...', component: 'ConnectionManager'); // i18n-exempt
       await _authenticateWithBiometrics(biometricReason);
-      developer.log('Step 2: loading credential...', name: 'ConnectionManager'); // i18n-exempt
+      AppLogger.info('Step 2: loading credential...', component: 'ConnectionManager'); // i18n-exempt
       final credential = await _loadCredential();
       // i18n-exempt
-      developer.log('Step 3: connecting WS to ${credential.endpoint}...', name: 'ConnectionManager');
+      AppLogger.info('Step 3: connecting WS to ${credential.endpoint}...', component: 'ConnectionManager');
       await _establishWebSocket(credential);
       _transitionTo(ConnectionState.connected);
     } on ConnectionError catch (error) {
       // i18n-exempt
-      developer.log('Connect failed: ${error.type} - ${error.message}', name: 'ConnectionManager', error: error.cause);
+      AppLogger.error('Connect failed: ${error.type} - ${error.message}', component: 'ConnectionManager', error: error.cause);
       _lastError = error;
       _transitionTo(ConnectionState.error);
     }
@@ -183,7 +182,7 @@ class ConnectionManager {
     _broadcastStream = _channel?.stream.asBroadcastStream();
     _channelSubscription = _broadcastStream?.listen(
       (data) {
-        developer.log('WS recv: type=${data.runtimeType}', name: 'WS'); // i18n-exempt
+        AppLogger.info('WS recv: type=${data.runtimeType}', component: 'ConnectionManager'); // i18n-exempt
         _outputController.add(data);
       },
       onDone: () {
@@ -192,9 +191,9 @@ class ConnectionManager {
         }
       },
       onError: (Object error) {
-        developer.log(
-          'WebSocket stream error',
-          name: 'ConnectionManager',
+        AppLogger.error(
+          'WebSocket stream error', // i18n-exempt
+          component: 'ConnectionManager',
           error: error,
         );
         _lastError = ConnectionError(
@@ -235,9 +234,9 @@ class ConnectionManager {
 
   void _transitionTo(ConnectionState newState) {
     if (_state == newState) return;
-    developer.log(
-      'State: $_state -> $newState',
-      name: 'ConnectionManager',
+    AppLogger.info(
+      'State: $_state -> $newState', // i18n-exempt
+      component: 'ConnectionManager',
     );
     _state = newState;
     _stateController.add(newState);
