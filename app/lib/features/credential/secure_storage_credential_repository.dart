@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:app_tunnel/core/logging/app_logger.dart';
 import 'package:app_tunnel/features/credential/credential.dart';
 import 'package:app_tunnel/features/credential/credential_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -18,6 +19,10 @@ class SecureStorageCredentialRepository implements CredentialRepository {
 
   @override
   Future<void> save(Credential credential) async {
+    AppLogger.info(
+      'save: writing credential', // i18n-exempt
+      component: 'CredentialRepository',
+    );
     final json = jsonEncode(credential.toJson());
     await _storage.write(key: _storageKey, value: json);
   }
@@ -25,6 +30,11 @@ class SecureStorageCredentialRepository implements CredentialRepository {
   @override
   Future<Credential?> load() async {
     final raw = await _storage.read(key: _storageKey);
+    final found = raw != null;
+    AppLogger.info(
+      'load: found=$found', // i18n-exempt
+      component: 'CredentialRepository',
+    );
     if (raw == null) return null;
     final json = jsonDecode(raw) as Map<String, dynamic>;
     return Credential.fromJson(json);
@@ -32,12 +42,21 @@ class SecureStorageCredentialRepository implements CredentialRepository {
 
   @override
   Future<void> delete() async {
+    AppLogger.info(
+      'delete: removing credential', // i18n-exempt
+      component: 'CredentialRepository',
+    );
     await _storage.delete(key: _storageKey);
   }
 
   @override
   Future<bool> exists() async {
     final raw = await _storage.read(key: _storageKey);
-    return raw != null;
+    final found = raw != null;
+    AppLogger.info(
+      'exists: $found', // i18n-exempt
+      component: 'CredentialRepository',
+    );
+    return found;
   }
 }

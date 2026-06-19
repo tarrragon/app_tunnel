@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:app_tunnel/core/logging/app_logger.dart';
 import 'package:app_tunnel/features/terminal/protocol/terminal_protocol.dart';
 
 /// 需求：[SPEC-004 FR-03] ttyd tty 子協議實作
@@ -24,6 +25,10 @@ class TtydProtocol implements TerminalProtocol {
 
   @override
   Uint8List encodeInput(String data) {
+    AppLogger.info(
+      'encodeInput: ${data.length} chars', // i18n-exempt
+      component: 'TtydProtocol',
+    );
     final dataBytes = utf8.encode(data);
     final frame = Uint8List(1 + dataBytes.length);
     frame[0] = inputPrefix;
@@ -33,6 +38,10 @@ class TtydProtocol implements TerminalProtocol {
 
   @override
   Uint8List encodeResize({required int columns, required int rows}) {
+    AppLogger.info(
+      'encodeResize: ${columns}x$rows', // i18n-exempt
+      component: 'TtydProtocol',
+    );
     final json = '{"columns":$columns,"rows":$rows}';
     final jsonBytes = utf8.encode(json);
     final frame = Uint8List(1 + jsonBytes.length);
@@ -43,6 +52,10 @@ class TtydProtocol implements TerminalProtocol {
 
   @override
   String? decodeOutput(dynamic rawFrame) {
+    AppLogger.info(
+      'decodeOutput: type=${rawFrame.runtimeType}', // i18n-exempt
+      component: 'TtydProtocol',
+    );
     if (rawFrame is String) {
       if (rawFrame.isEmpty) return null;
       if (rawFrame.codeUnitAt(0) == outputPrefix) {
@@ -70,13 +83,22 @@ class TtydProtocol implements TerminalProtocol {
     required String username,
     required String password,
   }) {
+    AppLogger.info(
+      'buildHeaders: building Basic auth', // i18n-exempt
+      component: 'TtydProtocol',
+    );
     final credentials = base64Encode(utf8.encode('$username:$password'));
-    return {'Authorization': 'Basic $credentials'};
+    return {'Authorization': 'Basic $credentials'}; // i18n-exempt
   }
 
   @override
   String? buildAuthTokenFrame({String? authToken}) {
-    if (authToken == null || authToken.isEmpty) return null;
+    final hasToken = authToken != null && authToken.isNotEmpty;
+    AppLogger.info(
+      'buildAuthTokenFrame: hasToken=$hasToken', // i18n-exempt
+      component: 'TtydProtocol',
+    );
+    if (!hasToken) return null;
     return jsonEncode({'AuthToken': authToken});
   }
 }
