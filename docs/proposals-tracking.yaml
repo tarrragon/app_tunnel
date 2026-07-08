@@ -65,7 +65,10 @@ proposals:
       - item: "IS-3 多 endpoint 管理（本機 + VM、enroll 多目標、憑證獨立存放）"
         status: pending
         verified_by: null
-      - item: "IS-4 全螢幕 TUI 相容性（以 Phase 1 現成 client 為 baseline 對照）"
+      - item: "IS-4 全螢幕 TUI 相容性（以 Phase 1 現成 client 為 baseline 對照、含 CJK 雙寬字渲染）"
+        status: pending
+        verified_by: null
+      - item: "IS-5 CJK 即時輸入（compose buffer 讓 IME 組字再送出；Phase 1 揭露的差異化機會、超越現成 client）"
         status: pending
         verified_by: null
     notes: >
