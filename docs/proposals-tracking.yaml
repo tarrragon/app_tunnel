@@ -43,3 +43,34 @@ proposals:
       promote 路徑：補多視角審查記錄（至少 linux + 安全視角）→ 開實作 ticket → status 改 confirmed。
       框架特例：doc skill 的 domain/platform/extension_status 欄位為 Chrome Extension 遺留，
       已於 spec/usecase 以本專案語意重新詮釋，缺口待回饋 docs/upstream-feedback/。
+
+  PROP-002:
+    title: "Agent 工作機工作流的功能對齊（擴充鍵列、斷線重連、多 endpoint、TUI 相容）"
+    status: draft                # In Scope 為候選，外部工作流 Phase 1 完成後凍結
+    evaluation_level: standard
+    proposed: "2026-07-08"
+    confirmed: null
+    target_version: "v0.2.0"
+    source: usage
+    spec_refs: []                # 待範圍凍結後轉化
+    usecase_refs: []             # 預期新增 UC：agent 工作機日常操作循環
+    ticket_refs: []              # promote 至 confirmed 前須綁定實作 ticket（規則 4）
+    checklist:
+      - item: "IS-1 擴充鍵列（Esc / Ctrl / Tab / Shift+Tab / 方向鍵、長按重複）"
+        status: pending
+        verified_by: null
+      - item: "IS-2 WebSocket 斷線自動重連 + 回到同一 multiplexer session"
+        status: pending
+        verified_by: null
+      - item: "IS-3 多 endpoint 管理（本機 + VM、enroll 多目標、憑證獨立存放）"
+        status: pending
+        verified_by: null
+      - item: "IS-4 全螢幕 TUI 相容性（以 Phase 1 現成 client 為 baseline 對照）"
+        status: pending
+        verified_by: null
+    notes: >
+      驗收規格外部凍結：外部工作流（遠端 agent 工作機）Phase 1 以現成 client 跑通的
+      驗證判準（十步驟 + 三個端到端情境）即 AC-0 總驗收，凍結前維持 draft、不開 ticket。
+      前置依賴：PROP-001 IS-4（Flutter 終端機 UI）。
+      Out of Scope 明確排除：mosh 式本地回顯（known gap）、通知（ntfy 職責）、
+      session 持久化（multiplexer 職責）、多人多租戶。
