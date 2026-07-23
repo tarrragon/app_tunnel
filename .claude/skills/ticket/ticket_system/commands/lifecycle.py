@@ -23,6 +23,7 @@ from ticket_system.lib.constants import (
     TERMINAL_STATUSES,
     CLOSE_REASONS,
     CLOSE_REASON_RETROSPECTIVE_UNKNOWN,
+    TICKET_ID_RE,
 )
 from ticket_system.lib.file_lock import file_lock
 from ticket_system.lib.precondition import require_in_progress
@@ -40,6 +41,7 @@ from ticket_system.lib.ticket_validator import (
     validate_acceptance_criteria,
     validate_execution_log,
     validate_execution_log_by_type,
+    validate_self_check_subsection,
 )
 from ticket_system.lib.messages import (
     ErrorMessages,
@@ -60,6 +62,12 @@ from ticket_system.lib.tdd_sequence import (
     validate_phase_prerequisite,
     PHASE_LABELS,
 )
+from ticket_system.lib.tdd_phase_inference import (
+    infer_next_tdd_phase,
+    TDD_PHASE_SOURCE_AUTO,
+    TDD_PHASE_SOURCE_MANUAL,
+)
+from ticket_system.lib.ticket_builder import get_schema_note
 from ticket_system.lib.ticket_ops import (
     load_and_validate_ticket,
     resolve_ticket_path,
@@ -502,6 +510,9 @@ class TicketLifecycle:
             # W2-018：申報執行身份時寫入 who.current（與 complete --as 對稱）
             _apply_claim_identity(ticket, as_agent)
 
+            # W2-009：依 registry agent -> tdd_phases 對應自動推進 tdd_phase
+            _apply_auto_tdd_phase(ticket, as_agent)
+
             ticket_path = resolve_ticket_path(ticket, self.version, ticket_id)
             save_ticket(ticket, ticket_path)
 
@@ -756,18 +767,37 @@ class TicketLifecycle:
             ticket_type = ticket.get("type", "")
             if body and not skip_body_check:
                 typed_passed, typed_unfilled = validate_execution_log_by_type(ticket_type, body)
-                if not typed_passed:
+                # 0.4.1-W2-010：Layer 1 自檢子章節（`### 自檢結果`）warning 升 gate。
+                # IMP/ANA 缺該子章節時併入同一阻擋輸出；DOC 沿用免填規則（函式內
+                # 已對非 IMP/ANA type 直接放行，見 validate_self_check_subsection）。
+                self_check_passed, self_check_label = validate_self_check_subsection(
+                    ticket_type, body
+                )
+                if not typed_passed or not self_check_passed:
+                    unfilled_sections = list(typed_unfilled)
+                    if not self_check_passed:
+                        unfilled_sections.append(self_check_label)
                     print()
                     print(f"[Error] {ticket_id} body 未依 {ticket_type} schema 填寫必填章節")
                     print()
                     print("   未填寫的必填章節：")
-                    for section in typed_unfilled:
-                        print(f"   - {section}")
+                    for section in unfilled_sections:
+                        note = get_schema_note(ticket_type, section)
+                        suffix = f"（{note}）" if note else ""
+                        print(f"   - {section}{suffix}")
                     print()
                     print("   依 .claude/pm-rules/ticket-body-schema.md，此 type 以下章節為必填且須替換佔位符：")
                     for section in typed_unfilled:
                         print(
                             f'   ticket track append-log {ticket_id} "內容" --section "{section}"'
+                        )
+                    if not self_check_passed:
+                        print(
+                            f'   ticket track append-log {ticket_id} "內容" --section "Solution"'
+                        )
+                        print(
+                            "     # 於 Solution 內新增 ### 自檢結果 子章節"
+                            "（依 .claude/references/agent-self-check-template.md）"
                         )
                     print()
                     print("   逃生閥：--skip-body-check（需附理由於 Completion Info）")
@@ -775,11 +805,16 @@ class TicketLifecycle:
             elif body and skip_body_check:
                 # 逃生閥啟用：仍執行舊 soft check 作為可見提醒
                 log_filled, unfilled_sections = validate_execution_log(ticket_id, body)
-                if not log_filled:
+                self_check_passed, self_check_label = validate_self_check_subsection(
+                    ticket_type, body
+                )
+                if not log_filled or not self_check_passed:
                     print()
                     print(format_warning(WarningMessages.EXECUTION_LOG_NOT_FILLED))
                     for section in unfilled_sections:
                         print(f"   - {section}")
+                    if not self_check_passed:
+                        print(f"   - {self_check_label}")
                     print()
                     print("   --skip-body-check 已啟用，強制完成；請於 Completion Info 記錄理由")
                     print()
@@ -826,6 +861,13 @@ class TicketLifecycle:
 
         print(format_info(InfoMessages.TICKET_COMPLETED, ticket_id=ticket_id))
 
+        # W5-014.2: self-verify — 讀回真實 status 附在 stdout（opinionated-default）
+        verified_ticket = load_ticket(self.version, ticket_id)
+        if verified_ticket:
+            v_status = verified_ticket.get("status", "unknown")
+            v_completed_at = verified_ticket.get("completed_at", "unknown")
+            print(f"[verify] status={v_status}, completed_at={v_completed_at}")
+
         # 自動追加 worklog 進度行
         ticket_title = ticket.get("title", "")
         append_worklog_progress(self.version, ticket_id, ticket_title)
@@ -860,6 +902,14 @@ class TicketLifecycle:
         # 置於 _auto_handoff_if_needed 之前，讓解鎖後的子狀態可影響 handoff 建議
         # W11-035：捕獲 unblocked 清單以便 auto-stage 收集 children md 路徑
         unblocked_children = _post_complete_cascade(ticket, self.version, ticket_map) or []
+
+        # W1-082：children cascade 之外，反向掃描 blockedBy 引用者解鎖非 children
+        # 關係的兄弟 Ticket（W1-081 根因修復）。unblocked_siblings 併入
+        # unblocked_children 供下方 auto-stage 收集 children md 路徑。
+        unblocked_siblings = (
+            _reverse_unblock_blockedby(ticket_id, self.version, ticket_map) or []
+        )
+        unblocked_children = unblocked_children + unblocked_siblings
 
         # W17-008.15 方案 D：IMP complete 後檢查 source ANA 是否可 complete
         _print_source_ana_complete_hint(ticket, self.version)
@@ -951,6 +1001,82 @@ class TicketLifecycle:
         print(f"   狀態: {status_label}")
         return 0
 
+    # close reason 依 0.3.6-W1-006 正規化規則定案分為兩類：
+    # - 需指名後繼票（reason 語意為「已被取代 / 重複」，必須有具體對象）
+    # - 允許 none（reason 語意為「需求消失 / 用戶取消」，無後繼票可指名但需說明理由）
+    _CLOSE_REASONS_REQUIRE_TICKET_ID: frozenset = frozenset({"superseded_by", "duplicate"})
+    _CLOSE_REASONS_ALLOW_NONE: frozenset = frozenset(
+        {"requirement_vanished", "cancelled_by_user"}
+    )
+    _DEFER_SEMANTIC_PATTERN = re.compile(r"延後|移到|後續")
+    _NONE_TOKEN = "none"
+
+    def _validate_close_resolution(
+        self,
+        resolved_by: str,
+        reason_code: str,
+        reason_note: str,
+    ) -> Optional[str]:
+        """
+        驗證 close 的 resolved_by / reason_note 依 reason_code 分歧的合法性。
+
+        依 0.3.6-W1-006 正規化規則定案：
+        - superseded_by / duplicate：resolved_by 須為合法 Ticket ID 格式，且對應檔案存在
+        - requirement_vanished / cancelled_by_user：允許 resolved_by=none，但 reason_note 必填
+        - 任一 reason 的 resolved_by 或 reason_note 含延後語意（延後/移到/後續）：一律 reject，
+          引導改用 `ticket track migrate`（延後的唯一合法通道是保留 pending 移版本，close 不承載延後語意）
+
+        Args:
+            resolved_by: 解決此問題的 Ticket ID 或 none
+            reason_code: close_reason 枚舉值
+            reason_note: 關閉原因補充說明
+
+        Returns:
+            Optional[str]: 驗證失敗時回傳錯誤訊息字串；驗證通過回傳 None
+        """
+        guidance = (
+            "        參見：.claude/error-patterns/process-compliance/"
+            "PC-MON-002-required-field-without-value-validation.md"
+        )
+
+        # 延後語意偵測優先於其他分歧驗證：無論 reason_code 為何，一旦偵測到延後語意即 reject。
+        combined_text = f"{resolved_by or ''} {reason_note or ''}"
+        if self._DEFER_SEMANTIC_PATTERN.search(combined_text):
+            return (
+                "[Error] resolved_by / reason_note 含延後語意（延後/移到/後續）。"
+                "close 不承載延後語意，延後的唯一合法通道是 `ticket track migrate`"
+                "（保留 pending 移版本）\n"
+                f"        resolved_by={resolved_by!r} reason_note={reason_note!r}\n"
+                f"{guidance}"
+            )
+
+        if reason_code in self._CLOSE_REASONS_REQUIRE_TICKET_ID:
+            match = TICKET_ID_RE.match(resolved_by or "")
+            if not match:
+                return (
+                    f"[Error] --reason {reason_code} 要求 --resolved-by 為合法 Ticket ID 格式\n"
+                    f"        收到：{resolved_by!r}\n"
+                    f"{guidance}"
+                )
+            resolved_version = match.group(1)
+            resolved_ticket = load_ticket(resolved_version, resolved_by)
+            if not resolved_ticket:
+                return (
+                    f"[Error] --reason {reason_code} 要求 --resolved-by 指向存在的 Ticket，"
+                    f"但找不到檔案：{resolved_by}\n"
+                    f"{guidance}"
+                )
+        elif reason_code in self._CLOSE_REASONS_ALLOW_NONE:
+            if not reason_note:
+                return (
+                    f"[Error] --reason {reason_code} 要求 --reason-note 必填"
+                    f"（--resolved-by 可為 '{self._NONE_TOKEN}'，但須說明理由）\n"
+                    f"        收到：resolved_by={resolved_by!r} reason_note={reason_note!r}\n"
+                    f"{guidance}"
+                )
+
+        return None
+
     def close(
         self,
         ticket_id: str,
@@ -993,6 +1119,18 @@ class TicketLifecycle:
                 f"        參見：.claude/error-patterns/process-compliance/"
                 f"PC-090-deferred-close-anti-pattern.md"
             )
+            return 1
+
+        # Step 0.5：驗證 resolved_by / reason_note 依 reason_code 分歧的合法性
+        # （0.3.6-W1-006 正規化規則定案 / PC-MON-002：必填欄位缺值驗證）
+        error_msg = self._validate_close_resolution(
+            resolved_by=resolved_by,
+            reason_code=reason_code,
+            reason_note=reason_note,
+        )
+        if error_msg:
+            sys.stderr.write(error_msg + "\n")
+            print(error_msg)
             return 1
 
         # W14-044: file_lock 包圍 load → modify → save
@@ -1334,7 +1472,7 @@ def _print_claim_checklist(ticket: Dict[str, Any]) -> None:
 def _has_framework_path(ticket: Dict[str, Any]) -> bool:
     """檢查 ticket where.files 是否任一路徑命中 framework 路徑前綴。
 
-    [Ticket 0.18.0-W17-127.2] 改用 .claude/hooks/lib/framework_paths 為唯一 SSOT，
+    [Ticket 0.18.0-W17-127.2] 改用 .claude/lib/framework_paths 為唯一 SSOT，
     移除原 _FRAMEWORK_PATH_PREFIXES inline 清單（避免 SSOT 漂移）。
     [Ticket 0.18.0-W17-132] 改用 is_framework_path_broad（strict + .claude/hooks/）：
     hook 內警告訊息屬規範性產物，編輯時亦應觸發 S 問提示讀 SKILL。
@@ -1358,16 +1496,15 @@ def _resolve_framework_path_checker():
     """取得 framework path 判定函式（lib SSOT 為主，fallback 至 inline 前綴）。
 
     Lazy import：避免 lifecycle 模組於非 hook 環境（如純 ticket CLI 單元測試）
-    強依賴 hooks/lib 與 PyYAML。失敗時降級至 inline 前綴比對，保留既有行為。
+    強依賴 lib 與 PyYAML。失敗時降級至 inline 前綴比對，保留既有行為。
     """
     try:
-        # 將 .claude/hooks/ 加入 sys.path（從專案根目錄推導）
+        # 將 .claude/ 加入 sys.path（從專案根目錄推導）
         # lifecycle.py: .claude/skills/ticket/ticket_system/commands/lifecycle.py
-        # → 上溯 5 層至 .claude/，再進 hooks/
+        # → 上溯 5 層至 .claude/
         claude_dir = Path(__file__).resolve().parents[4]
-        hooks_dir = claude_dir / "hooks"
-        if str(hooks_dir) not in sys.path:
-            sys.path.insert(0, str(hooks_dir))
+        if str(claude_dir) not in sys.path:
+            sys.path.insert(0, str(claude_dir))
         from lib import framework_paths  # noqa: WPS433
         return framework_paths.is_framework_path_broad
     except Exception:  # noqa: BLE001 — 任何 import 失敗皆 fallback
@@ -1964,6 +2101,79 @@ def _cascade_unblock_children(
     return unblocked, warnings
 
 
+def _reverse_unblock_blockedby(
+    completed_ticket_id: str,
+    version: str,
+    ticket_map: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """
+    complete() 後反向掃描 blockedBy 引用者，解鎖非 children 關係的兄弟 Ticket。
+
+    W1-082：`_post_complete_cascade` 只走 children 路徑，遺漏 blockedBy 引用
+    已完成 Ticket、但未登記為 children 的兄弟 Ticket（W1-081 根因）。本函式
+    獨立於 children 關係，全量掃描 ticket_map 找出 status=blocked 且
+    blockedBy 含 completed_ticket_id 的 Ticket，通過 is_fully_unblocked 檢查
+    （AND 語義，closed 亦視為已解除）後解鎖為 pending。
+
+    與 `_post_complete_cascade` 的呼叫順序耦合：ticket_map 中已由 children
+    路徑解鎖的 Ticket，其 status 已被原地 mutate 為 pending，本函式的
+    `status == STATUS_BLOCKED` 篩選會自然跳過，不會重複 save/印出訊息。
+
+    Args:
+        completed_ticket_id: 剛完成的 Ticket id
+        version: 版本字串
+        ticket_map: 預先載入的 {ticket_id: ticket_dict} map（可能已被
+            `_post_complete_cascade` 原地 mutate）
+
+    Returns:
+        unblocked list of {id, title}（與 `_cascade_unblock_children` 第一
+        回傳值同型）
+    """
+    unblocked: List[Dict[str, Any]] = []
+
+    for tid, candidate in ticket_map.items():
+        if tid == completed_ticket_id:
+            continue
+        if candidate.get("status") != STATUS_BLOCKED:
+            continue
+        if completed_ticket_id not in (candidate.get("blockedBy") or []):
+            continue
+        if not is_fully_unblocked(
+            candidate, ticket_map, include_closed_as_resolved=True
+        ):
+            continue
+
+        candidate["status"] = STATUS_PENDING
+        try:
+            save_ticket(candidate, resolve_ticket_path(candidate, version, tid))
+            unblocked.append({"id": tid, "title": candidate.get("title", "")})
+        except Exception as err:
+            # §6.7 non-fail-fast：列入 stderr 警告而非隱藏
+            print(format_warning(
+                format_msg(
+                    LifecycleMessages.CASCADE_SAVE_FAILED,
+                    ticket_id=tid,
+                    error=err,
+                )
+            ))
+
+    if unblocked:
+        _print_blockedby_unblocked(unblocked)
+    return unblocked
+
+
+def _print_blockedby_unblocked(unblocked: List[Dict[str, Any]]) -> None:
+    """印出 blockedBy 反向掃描解鎖訊息（W1-082）。"""
+    print()
+    print(LifecycleMessages.BLOCKEDBY_UNBLOCKED_HEADER)
+    for item in unblocked:
+        print(format_msg(
+            LifecycleMessages.BLOCKEDBY_UNBLOCKED_ITEM,
+            id=item['id'],
+            title=item.get('title', ''),
+        ))
+
+
 def _print_cascade_unblocked(unblocked: List[Dict[str, Any]]) -> None:
     """印出 cascade 解鎖訊息（Phase 1 §3.3）。"""
     print()
@@ -2014,6 +2224,31 @@ def _apply_claim_identity(ticket: Dict[str, Any], as_agent: Optional[str]) -> No
         who.setdefault("history", {})
     else:
         ticket["who"] = {"current": as_agent, "history": {}}
+
+
+def _apply_auto_tdd_phase(ticket: Dict[str, Any], as_agent: Optional[str]) -> None:
+    """W2-009：claim --as 時依 registry agent -> tdd_phases 對應自動推進 tdd_phase。
+
+    `ticket track phase` 手動設定過（tdd_phase_source == "manual"）時不覆蓋，
+    保留手動意圖。agent 在 registry 無 tdd_phases 對應、或無法判斷「最早未完成
+    phase」時，``infer_next_tdd_phase`` 回傳 None，本函式靜默略過（tdd_phase
+    保持原值不動）。
+
+    Args:
+        ticket: 已載入的 ticket frontmatter（原地修改）。
+        as_agent: claim --as 申報的執行身份。
+    """
+    if not as_agent or not as_agent.strip():
+        return
+    if ticket.get("tdd_phase_source") == TDD_PHASE_SOURCE_MANUAL:
+        return
+
+    inferred = infer_next_tdd_phase(ticket, as_agent)
+    if not inferred or inferred == ticket.get("tdd_phase"):
+        return
+
+    ticket["tdd_phase"] = inferred
+    ticket["tdd_phase_source"] = TDD_PHASE_SOURCE_AUTO
 
 
 def execute_claim(args: argparse.Namespace, version: str) -> int:
