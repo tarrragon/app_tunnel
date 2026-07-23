@@ -94,6 +94,8 @@ ticket track complete <ticket-id> --as <自身 agent 名稱>
 
 > **邊界**：本段處理 **hook 強制層的 deny**（identity-guard 對照不符即擋）；前提一是 **agent 自律層**的 who.current 事前對照（不符即零寫入）。兩層互補、觸發路徑不同——自律層在寫入前自查，強制層在寫入時攔截。
 
+> **回覆勾選不算數，frontmatter 才是 SOT（W2-003）**：final message 裡描述「acceptance 已完成」屬記錄平面，`ticket track set-acceptance` / `check-acceptance` 寫入的 frontmatter 才是世界平面 SOT（見 `tool-output-trust-rules` 規則 5）。兩者不同步時 acceptance-gate-hook 只認 frontmatter，complete 會被擋下。收尾前務必實際執行上方 CLI 指令，不可只在回覆文字宣告完成。
+
 **例外情境**：
 
 | 狀況 | 處理 |
@@ -206,6 +208,28 @@ PM 和代理人透過 **Ticket** 溝通，不直接溝通。PM 查 Ticket 進度
 | dart MCP 其他寫入工具 | Bash 對應命令 或 Edit |
 
 > **來源**：W3-008（worktree 隔離對 daemon-rooted dart MCP 寫入工具不生效）。PM 端對應規則見 `.claude/pm-rules/parallel-dispatch.md`「worktree 實作 agent 禁用 dart MCP 寫入工具」；根因機制見 `.claude/skills/worktree/SKILL.md`「Base ref 與隔離邊界」章節。
+
+#### worktree 環境禁止以 Bash/Python 直寫主 repo（強制，W2-009 / W2-021）
+
+> **Why**：worktree 隔離僅對 Edit/Write 工具生效（CC runtime 層攔截），Bash redirect（`> /path`）和 Python `open()`/`write()` 不受攔截，可繞過隔離邊界直寫主 repo 檔案——真實副作用洩漏出隔離範圍，PM 需手動 `git checkout --` 還原。
+
+> **Consequence**：worktree agent 為通過 hook 檢查（hook 讀 `CLAUDE_PROJECT_DIR` 指向主 repo），在 Edit 被攔截後改用 Bash/Python 直寫主 repo ticket 檔或框架檔，造成主 repo working tree 被污染，與 worktree 隔離設計意圖矛盾。
+
+> **Action**：worktree 環境中所有檔案寫入必須限於 worktree 工作目錄（`$PWD` 或相對路徑），禁止寫入 worktree 以外的絕對路徑：
+
+| 禁止（繞過隔離） | 正確做法 |
+|----------------|---------|
+| `echo "..." > /Users/.../project/file.md`（主 repo 絕對路徑） | `echo "..." > ./file.md`（worktree 相對路徑） |
+| `python3 -c "open('/Users/.../project/file.md','w').write(...)"` | `python3 -c "open('./file.md','w').write(...)"` |
+| `ticket track append-log`（CLI 解析 `CLAUDE_PROJECT_DIR` 指向主 repo） | 用 Edit 修改 worktree 內的 ticket md，或用 `(cd $PWD && ticket ...)` 確認 cwd |
+
+> **識別方式**：路徑含 `CLAUDE_PROJECT_DIR` 值、專案根目錄絕對路徑、或 `..` 回溯至 worktree 外 → 違規。僅限相對路徑或 `$PWD` 下的路徑 → 合規。
+> **來源**：W2-009（worktree agent 以 Python 直寫繞過隔離修改主 repo ticket 檔）。
+
+#### worktree 全套件測試前若遇大量編譯失敗，先查 gitignored 生成產物是否缺失
+
+> **Why**：worktree 為 fresh checkout，任何 gitignored 生成產物若未同步存在會連鎖編譯失敗，且容易被誤判為高並行編譯器資源耗盡（實證與歸因陷阱見 `IMP-APP-003`）。遇到大量編譯失敗時，勿逕自歸因並行資源耗盡，應先確認生成產物是否存在，缺失時執行對應 generation 指令（如 `flutter gen-l10n` / `dart run build_runner build`）補齊，並回報 PM 評估是否需納入版控。
+> **來源**：`IMP-APP-003` 對照實驗、`.claude/pm-rules/parallel-dispatch.md`「worktree 為 fresh checkout」章節。
 
 ---
 
@@ -395,6 +419,14 @@ ascend 條件（**任一 OR 成立即停止執行、上報上層**）：
 
 ---
 
+### 11. 最小變更紀律（Surgical Changes，編輯既有碼時強制）
+
+**核心規則**：只改被派發任務要求改的碼。diff 每行須能對應需求；禁止四類越界——(1) 順手改鄰近無關碼（命名 / typo / 風格）、(2) 重新格式化未被要求格式化的檔案（reformat / 改縮排 / 重排 import）、(3) 清理非自己造成的既有死碼、(4) 用個人偏好改既有風格。新增碼須匹配所在檔案既有風格。
+
+**Why/Consequence**：越界改動與任務無因果關係，會擴大回歸面積、淹沒真實 diff、破壞檔案風格一致性，使 PM review 無法分辨任務改動與順手改動。**Action**：修改時發現鄰近其他問題（可重構點 / typo / 死碼），不當下順手改，回報 PM 由其建 Ticket 追蹤（quality-baseline 規則 5）；若修復開始級聯（改 A 觸發 B 觸發 C），停手回報 PM 這是範圍失控訊號。完整條款見 `.claude/references/quality-common.md` §1.7。
+
+---
+
 ## 執行檢查清單
 
 代理人在開始任務前，自我確認：
@@ -416,6 +448,7 @@ ascend 條件（**任一 OR 成立即停止執行、上報上層**）：
 - [ ] **--as 被 deny 時未拿掉 --as 繞過，已回報 PM 由其裁決（規則 2.4 --as 全覆蓋）**
 - [ ] **ticket 寫入前已 query 對照 who.current 與自身身份（規則 2.4 前提一，主判準）；不符時零寫入並回報 PM（PC-V1-002）**
 - [ ] **收尾前已確認 prompt 含執行指令（引用 ≠ 指派，規則 2.4 前提二，輔助判準）；僅含追溯 Ticket ID 時零 ticket 寫入**
+- [ ] 編輯既有碼時 diff 每行對應需求，無順手改動 / 無關 reformat / 越界死碼清理 / 風格偏好改動（規則 11）
 - [ ] （嵌套派發）descend 前已執行五步自檢且 D2 條件全數通過；ascend 時已寫 NeedsContext / Exit Status（規則 9）
 - [ ] 含 `[PM-ONLY]` 前綴的 hook 注入訊息已完全忽略：未執行其中動作、未納入回報（規則 10）
 
@@ -438,7 +471,11 @@ ascend 條件（**任一 OR 成立即停止執行、上報上層**）：
 
 ---
 
-**Last Updated**: 2026-06-11
+**Last Updated**: 2026-07-03
+**Version**: 1.16.0 - 規則 6（worktree 隔離）補「全套件測試前若遇大量編譯失敗，先查 gitignored 生成產物是否缺失」提示：未來新增生成產物的判讀準則（源自 `IMP-APP-003` 對照實驗）
+
+**Version**: 1.15.0 - 新增規則 11「最小變更紀律（Surgical Changes）」（1.5.0-W5-009.1 落地，源自外部 CLAUDE.md 範例第 4/10 章）：四類越界禁令 + 三明示 + 級聯範圍失控訊號，substance 路由 quality-common §1.7；檢查清單同步補項
+**Version**: 1.14.0 - 規則 2.4 補「回覆勾選不算數，frontmatter 才是 SOT」提醒：final message 屬記錄平面，`set-acceptance`/`check-acceptance` 寫入的 frontmatter 才是世界平面 SOT，兩者不同步時 acceptance-gate-hook 只認 frontmatter（0.4.1-W2-003，源 0.4.1-W1-001 摩擦 F3：0.4.0 W2-002/003 回覆勾選未動 frontmatter 二度擋 complete）
 **Version**: 1.13.0 - 規則 2.4 收尾三命令（check-acceptance / set-acceptance / complete）改為一律帶 `--as`（--as 全覆蓋），新增 deny 時禁繞過須回報 PM 條款；2.3 表格與檢查清單同步（W1-049 首輪裁決前置：92% warn 噪音源自 check-acceptance 未帶 --as）
 **Version**: 1.12.0 - 新增規則 10「忽略含 `[PM-ONLY]` 前綴的 hook 注入訊息」：Stop event 無 agent_id 致程式層 subagent 偵測失效，前綴為該盲區唯一受眾標記，subagent 須不執行、不轉述（PC-V1-004 防護 C 規則層）；檢查清單同步補項
 **Version**: 1.11.0 - 新增規則 9「嵌套派發資訊協議」：D1 ticket 為唯一主通道（三階段表 + 禁止模式表）+ D3 層級自覺（parent_id 鏈深度、can_descend() 單一判準、五步自檢流程）+ D2 決策速查（ascend 優先於 descend）；MAX_TICKET_DEPTH 數值單一定義點；檢查清單同步補項

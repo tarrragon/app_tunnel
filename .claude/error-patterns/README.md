@@ -146,6 +146,7 @@ Claude Code 內建了官方的 memory 系統（`~/.claude/projects/{project}/mem
 | TEST-002 | 測試流程不完整 | 高 | v0.6.2 |
 | TEST-003 | 過度驗證超出責任 | 中 | v0.6.2 |
 | TEST-004 | 重構引入 Wrapper 後 Mock Patch 路徑失效 | 高 | v0.1.0 |
+| TEST-BAL-001 | 測試 fixture 用理想化格式，真實輸入格式不同致 validator 靜默假通過 | 高 | v0.1.0 |
 
 ### 文件 (DOC)
 
@@ -188,6 +189,8 @@ Claude Code 內建了官方的 memory 系統（`~/.claude/projects/{project}/mem
 | ARCH-021 | 模組組裝遺漏導致功能鏈路靜默斷裂（原 ARCH-010 重編號） | 高 | v0.15.4 |
 | ARCH-V1-001 | 同一不變量單點執法、多入口繞過（前門裝鎖、側門敞開） | 中 | v1.0.0 |
 | ARCH-V1-002 | 雙向 overlay sync 製造重複 top-level 定義（死碼 shadow 活 bug） | 高 | v1.0.0 |
+| ARCH-APP-002 | uv tool install 全域同名 CLI 跨 consumer namespace 碰撞（last-write-wins） | 中 | v0.37.0 |
+| ARCH-BAL-001 | 架構依賴方向底線未用程式碼 import 鏈驗證，導致底線與現況矛盾 | 高 | v0.1.0 |
 
 ### 程式碼品質 (CQ)
 
@@ -261,6 +264,9 @@ Claude Code 內建了官方的 memory 系統（`~/.claude/projects/{project}/mem
 | IMP-078 | CE-Node 環境前提誤判 — Jest 測試綠燈但 CE Runtime 崩潰 | 高 | v0.19.0 |
 | IMP-079 | 批次替換工具誤傷偵測目標字面 — regex/meta-test 內嵌待測字元被盲目轉換後語意塌縮 | 中 | v0.19.1 |
 | IMP-V1-001 | 估算係數未經實測校準即上線 — 守門機制低估真值提供假安心 | 中 | v1.0.0 |
+| IMP-APP-001 | get_project_root 雙實作回傳型別分歧 — consumer 用錯 Path 方法 runtime 才爆 | 中 | v0.37.0 |
+| IMP-APP-002 | regex 解析多條目結構化檔案未以條目邊界為先 — DOTALL 跨條目誤配 + 格式漂移致解析恆空靜默失效 | 高 | v0.38.0 |
+| IMP-APP-003 | fresh checkout 缺 gitignored 生成產物導致連鎖編譯失敗，並被誤歸因為並行資源耗盡 | 高 | v0.38.0 |
 
 ### 流程合規 (PC)
 
@@ -373,8 +379,17 @@ Claude Code 內建了官方的 memory 系統（`~/.claude/projects/{project}/mem
 | PC-V1-008 | lockfile 版本漂移修正被 auto-preserve worktree commit 孤立並險遭當噪音丟棄 | 中 | v1.0.0 |
 | PC-V1-009 | 機械缺陷誤診為流程缺陷（import 殘留可由 smoke test 消除卻誤上人工 PR 審查） | 高 | v1.0.0 |
 | PC-V1-010 | 子代理人完成摘要把測試總數誤報為通過數，遮蔽紅燈（PM 須獨立重跑讀實跑行） | 高 | v1.0.0 |
+| PC-V1-012 | 防護置於便利攔截介面而非狀態變異真實源頭（攔錯攻擊面 + 行為防護冒充結構治本） | 中 | v1.0.0 |
+| PC-V1-013 | acceptance 用 lenient build:dev 驗證遮蔽 production-only gate 失敗（驗證路徑 ≠ 出貨路徑） | 中 | v1.0.0 |
 | PC-APP-001 | 延後決策綁定的 trigger ticket 引用未查證 scope 一致性（trigger 名存實亡） | 中 | v0.32.0 |
 | PC-APP-002 | sync-pull 孤兒清理超出宣稱範圍刪除，preserve 機制未生效致專案特化檔遺失 | 高 | v0.32.0 |
+| PC-APP-004 | 症狀緩解累積偏誤——同一根因累積多個緩解機制而非根治 | 中 | v0.37.0 |
+| PC-APP-005 | ANA 建議方案的可行性驗證僅跑 happy path，前提與 UX 後果到 IMP 才暴露 | 中 | v0.37.0 |
+| PC-APP-007 | 多個 Spawn Request 合併為單票時驗收項遺失與憑空補入（標題宣稱涵蓋、acceptance 未承接） | 高 | v0.38.0 |
+| PC-APP-010 | code agent 杜撰 UC- 前綴偽需求 ID——TDD 實作註解未對照 spec use case（code 38 token vs spec 10） | 中 | v0.38.1 |
+| PC-MON-001 | 工具防護落地於可繞過的執行點導致復發（version-release pre-flight 防護在手動收尾路徑零次執行） | 中 | v0.3.5 |
+| PC-MON-002 | 必填不等於有效——CLI 必填欄位無格式/存在性驗證，自由文字穿透防護（resolved_by=設計決策） | 中 | v0.3.6 |
+| PC-BAL-005 | 決斷強制 hook 觸發詞正則誤傷標準章節名「Phase 4 重構評估」（PC-113/138/144 同家族，跨 hook 復發） | 中 | v0.1.0 |
 
 ---
 

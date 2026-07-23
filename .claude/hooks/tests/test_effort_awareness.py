@@ -24,7 +24,7 @@ HOOKS_DIR = Path(__file__).parent.parent
 ticket_skill_hooks_path = HOOKS_DIR.parent / "skills" / "ticket" / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 
-from hook_utils import get_effort_level
+from lib import get_effort_level
 
 
 # ============================================================================
@@ -356,7 +356,7 @@ class TestTicketCreationValidationEffort:
 
 
 class TestCommentQAEffort:
-    HOOK = HOOKS_DIR / "comment-qa-hook.py"
+    HOOK = HOOKS_DIR.parent / "skills" / "compositional-writing" / "hooks" / "comment-qa-hook.py"
 
     def test_low_effort_short_circuits(self):
         payload = {

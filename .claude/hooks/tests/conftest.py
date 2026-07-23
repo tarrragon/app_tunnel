@@ -38,7 +38,7 @@ def isolate_hook_logs(tmp_path, monkeypatch):
     解析結果非 production repo，本 fixture 不介入，既有日誌路徑斷言以測試設定
     為準。
     """
-    import hook_utils.hook_logging as _hl
+    import lib.hook_logging as _hl
 
     log_root = tmp_path / "hook_log_isolation"
     log_root.mkdir(parents=True, exist_ok=True)
@@ -76,9 +76,15 @@ def tmp_project_root():
 
 @pytest.fixture
 def env_with_project_root(tmp_project_root):
-    """設定環境變數指向臨時專案根目錄"""
-    with patch.dict("os.environ", {"CLAUDE_PROJECT_DIR": str(tmp_project_root)}):
-        yield tmp_project_root
+    """設定環境變數指向臨時專案根目錄
+
+    同時停用 hook_base.get_project_root() 的 worktree 偵測（0.38.1-W2-020）：
+    偵測優先於 CLAUDE_PROJECT_DIR，若不停用，在 git linked worktree 環境下
+    執行測試時會忽略此處設定的 tmp_project_root，一律回傳真實 worktree 根目錄。
+    """
+    with patch("lib.hook_base._linked_worktree_root", return_value=None):
+        with patch.dict("os.environ", {"CLAUDE_PROJECT_DIR": str(tmp_project_root)}):
+            yield tmp_project_root
 
 
 @pytest.fixture

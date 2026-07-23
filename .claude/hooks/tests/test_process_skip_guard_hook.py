@@ -19,7 +19,7 @@ spec = importlib.util.spec_from_file_location("process_skip_guard_hook", hook_pa
 process_skip_guard_hook = importlib.util.module_from_spec(spec)
 
 # 添加 hooks 目錄到 path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # 執行模組
 spec.loader.exec_module(process_skip_guard_hook)
@@ -33,7 +33,7 @@ _should_suppress_sa_review_reference = (
 )
 
 # 從 hook_utils 匯入 generate_hook_output
-from hook_utils import generate_hook_output
+from lib import generate_hook_output
 
 
 class TestDetectSkipIntent:
