@@ -3,7 +3,7 @@ name: saas-tech-selection
 description: "初始化 SaaS repo 時的設計與選型訪談協議：定錨後先過交付形態 gate（託管平台 / 垂直 SaaS / 辦公生態自動化 / BaaS / 半託管 CMS / 自建）、自建成立才從使用者操作（BDD）推導功能與風險、依 SRP / OCP 切分 domain 與 event（DDD）、再把技術維度掛在領域骨架下逐項確認、每個維度附不可沉默跳過的防護底線、產出設計決策記錄與 scaffold 建議。Triggers: 初始化 repo, 新專案, 開新服務, SaaS 選型, 技術選型, tech stack, 要不要自建, 託管平台, Shopify, Wix, Firebase, WordPress, Apps Script, DDD, domain 切分, event 驅動, event storming, BDD, 行為情境, 使用者操作盤點, 選資料庫, 選 queue, 要不要 redis, 要不要 k8s, MVP 架構, repo scaffold, 專案起手, stack 評估, 選型訪談, 架構訪談."
 license: MIT
 metadata:
-  version: 0.6.0
+  version: 0.9.0
   category: selection-protocol
 ---
 
@@ -39,6 +39,23 @@ metadata:
 ### Stage 1：使用者操作盤點（BDD）
 
 枚舉所有操作主體（含管理者、客服、訪客、機器角色）與其全部操作、每個操作寫行為情境（Given / When / Then 至少一主一失敗）、盤點誤操作風險、設計前端引導與後端防護的成對對應。寫不出行為情境的操作就是還沒想清楚的需求 — 在這裡打斷、而不是開發到一半才發現。協議見 `references/user-operations-bdd.md`。
+
+### Stage 1.5：畫面狀態矩陣展開（條件式、產品有 UI 元件才執行）
+
+操作清單的「前端引導」欄只描述顯示，容易漏掉操作和退出路徑。產品有 UI 元件時，把操作清單展開成畫面狀態矩陣 — 每個畫面的每個狀態四欄（顯示 / 可用操作 / 進入條件 / 退出路徑）。退出路徑欄為空 = UX 死胡同。每個 gate 用三問展開（成功 / 失敗 / 不確定）。展開原則見 `references/principles/screen-state-matrix-expansion.md`、操作步驟在 `references/user-operations-bdd.md` 的「畫面狀態矩陣展開」段。
+
+### Stage 1.6：UX 形態因素判定（條件式，產品有 UI 元件才執行）
+
+產品有 UI 元件時，形態因素決策先於元件庫設計、屬 SPEC 階段先決——結論決定元件庫是單一響應式結構，還是分版型雙軌 builder + 獨立元件設計；晚定形回溯成本高於訪談階段多問幾題。四維決策問題（引用 `.claude/methodologies/component-library-bidirectional-constraint-methodology.md`「形態因素先決」）：
+
+| 維度     | 決策問題                                                                     |
+| -------- | ----------------------------------------------------------------------------- |
+| 裝置光譜 | 手機 / 平板 / 桌面 / 摺疊機，各自是否為正式支援目標？                        |
+| 方向支援 | 直持 / 橫持是否皆支援？版型差異大到需獨立 builder 與獨立元件設計，或以響應式單一元件涵蓋？ |
+| 特殊表面 | 桌面 widget、懸浮視窗、畫中畫等系統表面是否需要？其尺寸約束是否需獨立元件變體？ |
+| 斷點策略 | RWD 斷點由 design token 統一定義，禁止元件各自硬編碼斷點                     |
+
+**防護底線（不可沉默跳過）**：版型拆分（雙 builder）是重大成本決策，須於 SPEC 階段決定並記錄；使用者未明文表態即預設單一響應式元件庫，不可由後續開發階段自行決定拆分。
 
 ### Stage 2：Domain / Event 切分（DDD）
 
@@ -87,23 +104,27 @@ metadata:
 
 ## 觸發路由
 
-| 訊號                                                                                        | 讀哪份 reference                                                                                |
-| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 使用者的需求看起來用託管平台 / BaaS 就能解決（電商、表單流程、內容站、app 後端）            | `references/interview-core.md`（定錨段的交付形態 gate）                                         |
-| 開始盤點功能、使用者說「我要做一個 X 的服務」                                               | `references/user-operations-bdd.md`（操作盤點）                                                 |
-| 操作清單完成、要切 domain / 定 event                                                        | `references/domain-event-modeling.md`（domain / event 切分）                                    |
-| 判斷一塊 domain / 維度該自建還是買、或候選 vendor 一次 cover 多維度（跨能力 bundle / BaaS） | `references/principles/capability-outsourcing-depth.md`（外包深度三分層）                       |
-| 領域模型完成、要判讀技術需求                                                                | `references/interview-core.md`（定錨 + 核心問題）                                               |
-| 正式狀態保存（帳號、訂單、合約、金流）                                                      | `references/dimensions/state-storage.md`（必）                                                  |
-| 任何對外服務                                                                                | `references/dimensions/deployment-platform.md`（必）+ `references/dimensions/security.md`（必） |
-| 任何 production 服務                                                                        | `references/dimensions/observability.md`（必）+ `references/dimensions/reliability.md`（必）    |
-| event catalog 有不可丟 event、或 request 外的可靠工作                                       | `references/dimensions/async-queue.md`                                                          |
-| 同一資料高頻重複讀、昂貴計算共用、session / presence                                        | `references/dimensions/cache.md`                                                                |
-| 明確高峰活動、成本敏感、規模假設首年破十萬用戶                                              | `references/dimensions/capacity-performance.md`                                                 |
-| 使用者問「之後長大怎麼辦」、或要寫 tripwire 總表                                            | `references/scale-stage-triggers.md`                                                            |
-| 防護底線逐項確認、或使用者要求跳過某條底線                                                  | `references/baseline-protections.md`                                                            |
-| 訪談收斂、要產出決策文件與 scaffold 建議                                                    | `references/decision-record-template.md`                                                        |
-| 決策記錄產出後、專案有 doc skill、要移交需求文件                                            | `references/decision-record-template.md`（銜接 doc 系統節）                                     |
+| 訊號                                                                                        | 讀哪份 reference                                                                                                            |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 使用者的需求看起來用託管平台 / BaaS 就能解決（電商、表單流程、內容站、app 後端）            | `references/interview-core.md`（定錨段的交付形態 gate）                                                                     |
+| 產品是開源自架工具（開發者工具 / CLI 工具 / 自架服務、源碼公開）                            | `references/interview-core.md`（開源自架工具中間流程 + 開源替代品 check）                                                   |
+| 開始盤點功能、使用者說「我要做一個 X 的服務」                                               | `references/user-operations-bdd.md`（操作盤點）                                                                             |
+| 操作清單完成、產品有 UI 元件、要展開畫面狀態矩陣                                            | `references/user-operations-bdd.md`（Stage 1.5 畫面狀態矩陣展開）+ `references/principles/screen-state-matrix-expansion.md` |
+| 產品有 UI 元件、要判斷是否需分版型雙軌設計（裝置光譜 / 方向支援 / 特殊表面 / 斷點策略）      | 本檔 Stage 1.6（UX 形態因素判定）+ `.claude/methodologies/component-library-bidirectional-constraint-methodology.md`「形態因素先決」 |
+| 操作清單完成、要切 domain / 定 event                                                        | `references/domain-event-modeling.md`（domain / event 切分）                                                                |
+| 判斷一塊 domain / 維度該自建還是買、或候選 vendor 一次 cover 多維度（跨能力 bundle / BaaS） | `references/principles/capability-outsourcing-depth.md`（外包深度三分層）                                                   |
+| 領域模型完成、要判讀技術需求                                                                | `references/interview-core.md`（定錨 + 核心問題）                                                                           |
+| 正式狀態保存（帳號、訂單、合約、金流）                                                      | `references/dimensions/state-storage.md`（必）                                                                              |
+| 任何對外服務                                                                                | `references/dimensions/deployment-platform.md`（必）+ `references/dimensions/security.md`（必）                             |
+| 任何 production 服務                                                                        | `references/dimensions/observability.md`（必）+ `references/dimensions/reliability.md`（必）                                |
+| event catalog 有不可丟 event、或 request 外的可靠工作                                       | `references/dimensions/async-queue.md`                                                                                      |
+| 同一資料高頻重複讀、昂貴計算共用、session / presence                                        | `references/dimensions/cache.md`                                                                                            |
+| 產品有 client-side 元件（mobile app / SPA / desktop app）                                   | `references/dimensions/observability.md`（client-side 觸發展開段）+ `references/principles/client-side-observability.md`    |
+| 明確高峰活動、成本敏感、規模假設首年破十萬用戶                                              | `references/dimensions/capacity-performance.md`                                                                             |
+| 使用者問「之後長大怎麼辦」、或要寫 tripwire 總表                                            | `references/scale-stage-triggers.md`                                                                                        |
+| 防護底線逐項確認、或使用者要求跳過某條底線                                                  | `references/baseline-protections.md`                                                                                        |
+| 訪談收斂、要產出決策文件與 scaffold 建議                                                    | `references/decision-record-template.md`                                                                                    |
+| 決策記錄產出後、專案有 doc skill、要移交需求文件                                            | `references/decision-record-template.md`（銜接 doc 系統節）                                                                 |
 
 每份 reference 自包含：以該階段或維度為核心、把訪談問題、判準、防護底線與 tripwire 收在同一檔。閱讀任一 reference 不需要回來看其他 reference。
 
@@ -134,7 +155,10 @@ saas-tech-selection/
     ├── baseline-protections.md           # 跨維度防護底線清單 + 延後記錄協議
     ├── decision-record-template.md       # 設計決策記錄模板（操作風險表 / domain map / event catalog / 維度決策）+ scaffold 格式
     ├── principles/
-    │   └── capability-outsourcing-depth.md  # 外包深度三分層（managed 基礎設施 / feature SaaS / 跨能力 bundle）+ commodity domain / 接縫成本判讀
+    │   ├── capability-outsourcing-depth.md  # 外包深度三分層（managed 基礎設施 / feature SaaS / 跨能力 bundle）+ commodity domain / 接縫成本判讀
+    │   ├── screen-state-matrix-expansion.md # Stage 1.5：操作清單 → 畫面狀態矩陣展開、退出路徑檢查、gate 三問
+    │   ├── three-layer-test-strategy.md     # 三層測試策略（unit / protocol integration / screen state）、mock 遮蔽意識
+    │   └── client-side-observability.md     # Client-side 觸發展開：四類事件分類、自架 vs 商業、SDK 設計
     └── dimensions/
         ├── state-storage.md              # 正式狀態與資料儲存：DB 類型、多租戶資料模型、migration / 備份底線
         ├── cache.md                      # 快取：何時需要、失效策略先行、不可當 source of truth
@@ -145,3 +169,8 @@ saas-tech-selection/
         ├── reliability.md                # CI gate、測試層次、備份演練、第三方依賴降級
         └── capacity-performance.md       # 容量假設、連線池、成本監控、高峰 readiness
 ```
+
+---
+
+**Version**: 1.1.0 — 新增 Stage 1.6「UX 形態因素判定」（裝置光譜 / 方向支援 / 特殊表面 / 斷點策略四維，引用 `component-library-bidirectional-constraint-methodology.md`「形態因素先決」），附防護底線：版型拆分屬 SPEC 階段決策，未明文即預設單一響應式；觸發路由表同步新增對應列
+**Version**: 1.0.0（歷史）
