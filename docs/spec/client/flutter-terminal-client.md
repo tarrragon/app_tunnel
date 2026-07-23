@@ -135,3 +135,7 @@ depends_on_domains: [auth, enrollment]
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（PROP-001 轉化） |
 | 1.1 | 2026-06-17 | 改用 Tailscale：三層 header→ttyd basic auth only、加 Tailscale 依賴 |
+
+## 相關文件
+
+- [`domain-map.md`](domain-map.md) — 本 domain 的 DDD bundle 邊界與依賴方向

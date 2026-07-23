@@ -91,3 +91,7 @@ depends_on_domains: [auth, client]
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（8 欄憑證包，含 CF Access + proxy token） |
 | 2.0 | 2026-06-17 | 改用 Tailscale：移除密鑰產生 + 可插拔後端、憑證包縮為 5 欄 |
+
+## 相關文件
+
+- [`domain-map.md`](domain-map.md) — 本 domain 的 DDD bundle 邊界與依賴方向

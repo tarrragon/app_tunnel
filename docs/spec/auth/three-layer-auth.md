@@ -91,3 +91,7 @@ depends_on_domains: [proxy, enrollment, connectivity]
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（三層縱深認證） |
 | 2.0 | 2026-06-17 | 改用 Tailscale：三層→兩層，移除 CF Access + proxy token |
+
+## 相關文件
+
+- [`domain-map.md`](domain-map.md) — 本 domain 的 DDD bundle 邊界與依賴方向

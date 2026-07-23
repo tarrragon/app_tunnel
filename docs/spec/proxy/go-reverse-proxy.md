@@ -135,3 +135,7 @@ depends_on_domains: [auth, connectivity]
 |------|------|---------|
 | 1.0 | 2026-06-16 | 初始骨架（PROP-001 轉化） |
 | 1.1 | 2026-06-17 | 改用 Tailscale：移除認證職責、client_ip 改取 RemoteAddr |
+
+## 相關文件
+
+- [`domain-map.md`](domain-map.md) — 本 domain 的 DDD bundle 邊界與依賴方向

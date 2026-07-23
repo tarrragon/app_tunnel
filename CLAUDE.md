@@ -91,6 +91,7 @@ another agent. Therefore:
 | 規格（5 domain） | `docs/spec/{auth,proxy,enrollment,client,connectivity}/` | 每個自建 domain 一份 |
 | 用例（4 操作） | `docs/usecases/UC-01~04*.md` | 配對、連線、輪替、啟停 |
 | 契約 | `docs/contract.md` | app⇄server 共用 SOT |
+| Domain Map（5 domain） | `docs/spec/{auth,proxy,enrollment,client,connectivity}/domain-map.md` | DDD bundle 邊界與依賴方向 DAG |
 
 ### 目錄結構
 
