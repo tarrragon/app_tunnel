@@ -45,9 +45,10 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
 # 加入 hook_utils 路徑（相同目錄）
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "hooks"))
 
-from hook_utils import (
+from lib import (
     setup_hook_logging, run_hook_safely, read_json_from_stdin, get_project_root,
     find_ticket_files, find_ticket_file, validate_ticket_has_decision_tree, save_check_log,
     is_handoff_recovery_mode, validate_hook_input, validate_ticket_unified

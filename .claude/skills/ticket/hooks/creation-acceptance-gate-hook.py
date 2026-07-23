@@ -43,16 +43,19 @@ import json
 from pathlib import Path
 
 # 加入 hook_utils 路徑（相同目錄）
-_hooks_dir = Path(__file__).resolve().parents[3] / "hooks"
-if _hooks_dir not in [p for p in sys.path if Path(p) == _hooks_dir]:
+_claude_dir = Path(__file__).resolve().parents[3]
+_hooks_dir = _claude_dir / "hooks"
+if str(_claude_dir) not in sys.path:
+    sys.path.insert(0, str(_claude_dir))
+if str(_hooks_dir) not in sys.path:
     sys.path.insert(0, str(_hooks_dir))
 
-from hook_utils import (
+from lib import (
     setup_hook_logging, run_hook_safely, read_json_from_stdin,
     parse_ticket_frontmatter, get_project_root, save_check_log,
     validate_hook_input, get_effort_level
 )
-from hook_utils.hook_ticket import find_ticket_file
+from lib.hook_ticket import find_ticket_file
 from lib.hook_messages import GateMessages, CoreMessages, format_message
 
 import re
